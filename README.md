@@ -11,6 +11,9 @@ final JSON are logged to **MySQL 8.0**.
 > hybrid RAG, grounding checks on every quote, an evaluation suite, request timeouts and token
 > tracking. Release history: [CHANGELOG.md](CHANGELOG.md). AI stack and approach: [AI_USAGE.md](AI_USAGE.md).
 
+**Live deployment:** <https://tcs-forecasting-agent.onrender.com> (opens the interactive API docs;
+`POST /forecast` needs an API key from the author; free instance, so the first request after idle takes about 1 minute).
+
 **Deploy:** a free public deployment on Render (Docker + hosted MySQL) is described in
 [DEPLOY.md](DEPLOY.md). The public API is protected by `X-API-Key` and a per-client rate limit.
 

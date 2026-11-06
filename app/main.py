@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy import text
 
 from app import __version__
@@ -57,6 +58,12 @@ app = FastAPI(
 def _is_quota_error(exc: BaseException) -> bool:
     text_ = f"{type(exc).__name__} {exc}"
     return "RESOURCE_EXHAUSTED" in text_ or "RateLimit" in text_
+
+
+@app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    """Send visitors of the bare URL to the interactive API docs."""
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health", tags=["system"])

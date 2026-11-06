@@ -74,3 +74,9 @@ def test_slow_forecast_times_out_with_504(monkeypatch):
     assert resp.status_code == 504
     row = get_request_log(resp.json()["detail"]["request_id"])
     assert row.status == "error" and "FORECAST_TIMEOUT_S" in row.error_message
+
+
+def test_root_redirects_to_docs():
+    with TestClient(main.app) as client:
+        resp = client.get("/", follow_redirects=False)
+    assert resp.status_code == 307 and resp.headers["location"] == "/docs"

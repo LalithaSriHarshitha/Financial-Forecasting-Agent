@@ -62,3 +62,15 @@ def test_quota_errors_map_to_429(monkeypatch):
         resp = client.post("/forecast", json={})
     assert resp.status_code == 429
     assert "quota" in resp.json()["detail"]["error"]
+
+
+def test_slow_forecast_times_out_with_504(monkeypatch):
+    import time as _time
+
+    monkeypatch.setattr(main.get_settings(), "forecast_timeout_s", 0.2)
+    monkeypatch.setattr(main, "run_forecast", lambda task, progress=None: _time.sleep(1))
+    with TestClient(main.app) as client:
+        resp = client.post("/forecast", json={})
+    assert resp.status_code == 504
+    row = get_request_log(resp.json()["detail"]["request_id"])
+    assert row.status == "error" and "FORECAST_TIMEOUT_S" in row.error_message

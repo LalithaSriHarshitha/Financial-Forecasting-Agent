@@ -10,6 +10,8 @@ sys.path.insert(0, str(ROOT))
 # Tests use a throwaway SQLite database and a dummy key; no MySQL or Gemini needed.
 os.environ["DATABASE_URL"] = f"sqlite:///{ROOT / 'tests' / '.test.db'}"
 os.environ.setdefault("GOOGLE_API_KEY", "test-key")
+os.environ["MARKET_DATA_ENABLED"] = "false"  # no network in tests; market tests mock the quote
+os.environ["LLM_PROVIDER"] = "gemini"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -70,6 +72,7 @@ def sample_result():
             "opportunities": [{"title": "AI services", "detail": "Growing AI deals",
                                "source": "Q2 FY27 earnings call"}],
             "forecast": {
+                "revenue_direction": "growth", "margin_direction": "stable",
                 "revenue_outlook": "Modest growth", "margin_outlook": "Stable",
                 "overall_outlook": "Steady quarter expected.", "confidence": "medium",
             },

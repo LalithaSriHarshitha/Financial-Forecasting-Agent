@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     )
 
     # Which LLM/embedding provider to use: "ollama" (local, no key) or "gemini" (Google API).
-    llm_provider: Literal["ollama", "gemini"] = Field(default="ollama", alias="LLM_PROVIDER")
+    llm_provider: Literal["ollama", "gemini"] = Field(default="gemini", alias="LLM_PROVIDER")
 
     # Ollama (https://ollama.com) - local models
     ollama_base_url: str = Field(default="http://localhost:11434", alias="OLLAMA_BASE_URL")
@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     ollama_num_ctx: int = Field(default=16384, alias="OLLAMA_NUM_CTX")
     ollama_num_predict: int = Field(default=3072, alias="OLLAMA_NUM_PREDICT")
     ollama_timeout_s: float = Field(default=900, alias="OLLAMA_TIMEOUT_S")
+
+    # Market data (bonus MarketDataTool)
+    market_data_enabled: bool = Field(default=True, alias="MARKET_DATA_ENABLED")
+    market_symbol: str = Field(default="TCS.NS", alias="MARKET_SYMBOL")
+
+    # Service limits
+    forecast_timeout_s: float = Field(default=600, alias="FORECAST_TIMEOUT_S")
 
     # RAG
     rag_chunks_per_quarter: int = Field(default=2, alias="RAG_CHUNKS_PER_QUARTER")

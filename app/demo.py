@@ -74,7 +74,18 @@ def main() -> int:
           f"quotes verified {g.get('quotes_verified')}, removed {len(g.get('quotes_removed_as_unsupported') or [])}")
     print(f"Risks / opportunities: {len(result['risks'])} / {len(result['opportunities'])}")
     print(f"Outlook              : {result['forecast']['overall_outlook']}")
+    print(f"Direction            : revenue {result['forecast']['revenue_direction']}, "
+          f"margin {result['forecast']['margin_direction']}")
     print(f"Confidence           : {result['forecast']['confidence']}")
+    mk = result.get("market_snapshot") or {}
+    if mk.get("available"):
+        print(f"Market               : {mk['symbol']} INR {mk['price']} ({mk['day_change_pct']}% today), "
+              f"{mk['pct_below_52w_high']}% below 52w high, P/E (TTM) {mk['pe_ttm']}")
+    elif mk:
+        print(f"Market               : unavailable ({mk.get('error')})")
+    u = body.get("usage", {})
+    print(f"Usage                : {u.get('llm_calls')} LLM calls, {u.get('input_tokens')} input / "
+          f"{u.get('output_tokens')} output tokens")
     print(f"\nFull JSON saved to {out}")
     return 0
 

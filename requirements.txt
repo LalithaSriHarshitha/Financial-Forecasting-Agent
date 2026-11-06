@@ -18,6 +18,9 @@ langchain-chroma==1.1.0
 pymupdf==2.1
 requests==2.34.2
 
+# Market data (optional MarketDataTool)
+yfinance==1.8.0
+
 # Database (MySQL 8.0)
 SQLAlchemy==2.1.8
 PyMySQL==1.2.3

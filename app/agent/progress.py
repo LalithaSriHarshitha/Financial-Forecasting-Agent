@@ -20,6 +20,8 @@ class ProgressLogger(BaseCallbackHandler):
     def __init__(self) -> None:
         self.started: dict[UUID, float] = {}
         self.llm_calls = 0
+        self.input_tokens = 0
+        self.output_tokens = 0
         self.tool_calls: list[dict] = []
         self._open_tools: dict[UUID, dict] = {}
         self._lock = threading.Lock()  # tools may run in parallel threads
@@ -34,6 +36,12 @@ class ProgressLogger(BaseCallbackHandler):
         logger.info("LLM call #%d started (~%d input tokens) ...", n, chars // 4)
 
     def on_llm_end(self, response: Any, *, run_id: UUID, **kw: Any) -> None:
+        for gens in getattr(response, "generations", None) or []:
+            for g in gens:
+                usage = getattr(getattr(g, "message", None), "usage_metadata", None) or {}
+                with self._lock:
+                    self.input_tokens += usage.get("input_tokens", 0) or 0
+                    self.output_tokens += usage.get("output_tokens", 0) or 0
         t0 = self.started.pop(run_id, None)
         if t0 is not None:
             logger.info("LLM call finished in %.0fs", time.perf_counter() - t0)
@@ -41,6 +49,11 @@ class ProgressLogger(BaseCallbackHandler):
     def on_llm_error(self, error: BaseException, *, run_id: UUID, **kw: Any) -> None:
         self.started.pop(run_id, None)
         logger.warning("LLM call failed: %s", str(error)[:200])
+
+    @property
+    def usage(self) -> dict:
+        return {"llm_calls": self.llm_calls, "input_tokens": self.input_tokens,
+                "output_tokens": self.output_tokens, "tool_calls": len(self.tool_calls)}
 
     # ---- Tool calls ----
     def on_tool_start(self, serialized: dict, input_str: str, *, run_id: UUID, **kw: Any) -> None:

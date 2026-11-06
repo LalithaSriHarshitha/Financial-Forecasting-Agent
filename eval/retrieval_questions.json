@@ -1,0 +1,18 @@
+{
+  "description": "Hand-written retrieval questions. Each is phrased WITHOUT the answer's key term, so it tests semantic matching as well as keywords. A hit = at least one of the top-k chunks (from the given quarter's call, if set) contains one of the expected terms. Terms were checked against the transcripts.",
+  "k": 3,
+  "questions": [
+    {"id": "acquisition_margin", "question": "How will the recent acquisition affect margins in the second half?", "quarter": "Q2 FY27", "expect_any": ["MHP"]},
+    {"id": "holiday_shutdowns", "question": "Will client holiday shutdowns hurt the December quarter?", "quarter": "Q2 FY27", "expect_any": ["furlough"]},
+    {"id": "telecom_rampdown", "question": "What is happening with the large Indian state telecom contract?", "quarter": "Q2 FY27", "expect_any": ["BSNL"]},
+    {"id": "contractor_costs", "question": "Why did spending on external contractors go up?", "quarter": "Q2 FY27", "expect_any": ["subcon"]},
+    {"id": "ai_model_partners", "question": "Which frontier AI model companies is TCS partnering with?", "quarter": "Q4 FY26", "expect_any": ["OpenAI"]},
+    {"id": "manufacturing_deal", "question": "Was there a large transformation deal with an industrial manufacturer?", "quarter": "Q1 FY27", "expect_any": ["SKF"]},
+    {"id": "salary_headwind", "question": "Are yearly salary raises a headwind for profitability?", "quarter": "Q4 FY26", "expect_any": ["wage", "increment"]},
+    {"id": "ai_revenue_size", "question": "How big is the AI services business now?", "quarter": null, "expect_any": ["AI revenue", "annualized"]},
+    {"id": "datacenter_business", "question": "Is TCS investing in building data centre capacity?", "quarter": "Q2 FY27", "expect_any": ["data center", "data centre"]},
+    {"id": "campus_hiring", "question": "How many graduates from campuses will be onboarded?", "quarter": "Q2 FY27", "expect_any": ["fresher"]},
+    {"id": "order_book", "question": "What was the total contract value of deals signed?", "quarter": "Q1 FY27", "expect_any": ["TCV"]},
+    {"id": "project_delays", "question": "Are customers postponing or pushing out projects?", "quarter": null, "expect_any": ["defer"]}
+  ]
+}

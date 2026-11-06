@@ -7,6 +7,8 @@ Docs at:   http://127.0.0.1:8000/docs
 import logging
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -24,6 +26,10 @@ from app.logging_config import setup_logging
 from app.schemas.forecast import ForecastRequest, ForecastResponse
 
 logger = logging.getLogger("api")
+
+
+# Agent runs execute here so a request can be timed out (FORECAST_TIMEOUT_S).
+_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="forecast")
 
 
 @asynccontextmanager
@@ -88,7 +94,12 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
     logger.info("Forecast request %s: %s", request_id, req.task[:120])
     progress = ProgressLogger()
     try:
-        run = run_forecast(req.task, progress=progress)
+        future = _executor.submit(run_forecast, req.task, progress=progress)
+        try:
+            run = future.result(timeout=settings.forecast_timeout_s)
+        except FutureTimeout as exc:
+            future.cancel()
+            raise TimeoutError(f"forecast exceeded FORECAST_TIMEOUT_S={settings.forecast_timeout_s:.0f}s") from exc
     except Exception as exc:
         latency = int((time.perf_counter() - started) * 1000)
         logger.exception("Forecast request %s failed", request_id)
@@ -102,6 +113,11 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
             model=settings.chat_model_name,
             latency_ms=latency,
         )
+        if isinstance(exc, TimeoutError):
+            raise HTTPException(
+                status_code=504,
+                detail={"request_id": request_id, "error": str(exc), "usage_so_far": progress.usage},
+            ) from exc
         if _is_quota_error(exc):
             raise HTTPException(
                 status_code=429,
@@ -125,6 +141,7 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
         latency_ms=int((time.perf_counter() - started) * 1000),
         tool_calls=run.trace,
         grounding=run.grounding,
+        usage=run.usage,
         result=run.result,
     )
     log_tool_calls(request_id, run.tool_calls)

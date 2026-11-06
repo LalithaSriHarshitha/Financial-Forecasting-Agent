@@ -98,3 +98,15 @@ def test_wrong_forecast_period_is_corrected(scripted_agent, sample_result):
     run = forecast_agent.run_forecast("Forecast next quarter for TCS")
     assert run.result.forecast_period == "Q3 FY27"
     assert run.grounding["forecast_period_corrected"] == {"from": "Q4 FY27", "to": "Q3 FY27"}
+
+
+def test_market_snapshot_attached_and_gap_reported(scripted_agent, sample_result, monkeypatch):
+    md = importlib.import_module("app.tools.market_data")
+    monkeypatch.setattr(md.get_settings(), "market_data_enabled", True)
+    monkeypatch.setattr(md, "get_market_snapshot", lambda force=False: {"available": False, "error": "offline"})
+    scripted_agent(_agent_args(sample_result, market_context="Shares trade near lows."))
+    run = forecast_agent.run_forecast("Forecast next quarter for TCS")
+    assert run.result.market_snapshot == {"available": False, "error": "offline"}
+    assert run.result.market_context is None
+    assert any("market data unavailable" in g.lower() for g in run.result.data_gaps)
+    assert run.usage["llm_calls"] == 3 and run.usage["tool_calls"] == 2

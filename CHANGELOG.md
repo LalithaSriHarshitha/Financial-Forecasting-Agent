@@ -3,6 +3,25 @@
 All notable changes to this project. Versions follow the release plan (V1 Foundation,
 V2 Intelligence, V3 Production and submission).
 
+## [3.0.0] - 2026-11-06 - V3 Production and submission
+
+### Added
+- **MarketDataTool** (optional bonus): live TCS.NS quote via yfinance (price, day change,
+  52-week range, moving averages, 1-year change, market cap), with trailing P/E computed from
+  validated EPS; 5-minute cache; failure-tolerant (`available: false` + data gap).
+- Structured forecast directions: `revenue_direction` (growth/flat/decline) and
+  `margin_direction` (expansion/stable/contraction); `market_context` and `market_snapshot`.
+- **Evaluation suite** `python -m eval.run`: extraction accuracy, retrieval hit@3 on 12
+  paraphrased questions (hybrid vs vector vs BM25), 31 faithfulness checks on the saved forecast,
+  and optional multi-run consistency; writes `eval/report.md` and `eval/report.json`.
+- Hardening: request timeout (`FORECAST_TIMEOUT_S` → HTTP 504), token and LLM-call `usage`
+  block in every response, investment-advice check.
+- README assignment checklist; complete `AI_USAGE.md`.
+
+### Changed
+- Default provider is Gemini (the verified configuration); Ollama remains optional.
+- Master prompt: three tools in parallel, structured directions, no price targets.
+
 ## [2.0.0] - 2026-11-06 - V2 Intelligence
 
 ### Added

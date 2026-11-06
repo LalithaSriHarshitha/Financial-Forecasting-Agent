@@ -2,14 +2,34 @@
 
 An AI agent, served through FastAPI, that reads **Tata Consultancy Services (TCS)** quarterly
 financial reports and earnings-call transcripts and returns a **structured, qualitative
-business-outlook forecast** for the next quarter. It runs on **Google Gemini** or on **local
-models via Ollama**, selected with one setting. Every request, every tool call and the final
-JSON are logged to **MySQL 8.0**.
+business-outlook forecast** for the next quarter. It runs on **Google Gemini** (default) or on
+**local models via Ollama**, selected with one setting. Every request, every tool call and the
+final JSON are logged to **MySQL 8.0**.
 
-> **Current release: V2 (Intelligence).** Rules-first financial extraction validated by
-> accounting identities (100% accuracy on the ground-truth set), speaker-aware hybrid RAG, and
-> grounding checks that remove unsupported quotes. V3 adds market data, evaluation and hardening.
-> See [CHANGELOG.md](CHANGELOG.md).
+> **Release: V3 (Production).** Three tools, including the optional MarketDataTool. Rules-first
+> financial extraction validated by accounting identities (33/33 ground-truth values), speaker-aware
+> hybrid RAG, grounding checks on every quote, an evaluation suite, request timeouts and token
+> tracking. Release history: [CHANGELOG.md](CHANGELOG.md). AI stack and approach: [AI_USAGE.md](AI_USAGE.md).
+
+**Quick start** (after the setup in section 3):
+`python -m app.check` → `python -m app.ingestion` → `python -m app.demo`, or `uvicorn app.main:app`.
+
+### Assignment checklist
+
+| Requirement | Where |
+|---|---|
+| FastAPI service, Python 3.10+ | `app/main.py`; run with `uvicorn app.main:app` |
+| LangChain agent, any LLM provider | `app/agent/` (Gemini or Ollama via `LLM_PROVIDER`) |
+| FinancialDataExtractorTool | `app/tools/financial_extractor.py`, `factsheet_parser.py` (section 2) |
+| QualitativeAnalysisTool (RAG over 2–3 transcripts) | `app/tools/qualitative_analysis.py`, `app/ingestion/` (3 transcripts) |
+| MarketDataTool (optional) | `app/tools/market_data.py` |
+| Forecast for the complex example task | `POST /forecast` (an empty body `{}` uses the assignment's example task) |
+| Structured JSON output | `app/schemas/forecast.py`; sample in [`sample_output.json`](sample_output.json) |
+| MySQL 8.0 logging of requests and output | tables `request_logs`, `tool_calls`, `financial_metrics` (`app/db/`) |
+| Documents found and downloaded | `data/manifest.json` + `python -m app.ingestion` |
+| README: overview, tool design, master prompt, setup, run | this file (sections 1–4) |
+| AI usage: stack, tools, outcomes, guardrails, limits | [AI_USAGE.md](AI_USAGE.md) |
+| Evaluation | `python -m eval.run` → [`eval/report.md`](eval/report.md) |
 
 ---
 
@@ -20,21 +40,26 @@ JSON are logged to **MySQL 8.0**.
 `POST /forecast` takes an analytical task (for example *"Analyze the last three quarters and
 forecast the next one"*). A LangChain tool-calling agent then:
 
-1. **gathers** in one turn, calling both tools in parallel:
+1. **gathers** in one turn, calling all three tools in parallel:
    - **FinancialDataExtractorTool**: validated revenue, employee cost, operating margin, net
      profit, EPS, USD and constant-currency growth, order-book TCV, headcount and attrition for
      every quarter, with QoQ/YoY trends;
    - **QualitativeAnalysisTool**: themes, sentiment and verified management statements from the
      earnings calls, on demand, margins, AI opportunities and risks;
+   - **MarketDataTool**: live share price, 52-week range, moving averages and trailing P/E
+     computed from validated EPS;
 2. **analyses** trends over the last three quarters, optionally with one targeted follow-up search;
 3. **cross-checks** what management says against the numbers;
-4. **forecasts** the direction of revenue and margin, the risks, the opportunities and a
-   confidence level.
+4. **forecasts** the direction of revenue (growth/flat/decline) and margin
+   (expansion/stable/contraction) with reasoning, plus the risks, the opportunities, market
+   context and a confidence level.
 
 Code then **grounds** the answer:
 - The per-quarter numbers are attached from the validated extractor. The LLM never writes them.
 - Every quote is checked against the transcripts; unsupported ones are removed.
 - The forecast period is checked against the data.
+- The market snapshot is attached by code.
+- Token usage and the full tool trace are recorded.
 
 ### Architecture
 
@@ -44,6 +69,7 @@ flowchart LR
     API --> AG[LangChain agent<br/>Gemini or Ollama + master prompt]
     AG -->|tool call| FE[FinancialDataExtractorTool<br/>rules + accounting checks]
     AG -->|tool call| QA[QualitativeAnalysisTool<br/>hybrid RAG]
+    AG -->|tool call| MD[MarketDataTool<br/>yfinance TCS.NS]
     FE --> PDF[(Fact sheet PDFs)]
     QA --> HY[BM25 + Chroma vectors<br/>speaker-aware chunks]
     AG -->|AgentForecast| GR[Grounding<br/>metrics attached, quotes verified]
@@ -66,6 +92,8 @@ flowchart LR
 | Retrieval per quarter | Every call is represented, so the tone can be compared across quarters. |
 | Batched topics: about 4 LLM calls per forecast | Fits free-tier quotas and keeps latency around 1–2 minutes on Gemini. |
 | Agent writes `AgentForecast`; code adds the numbers | Removes the main hallucination surface for figures. |
+| P/E from our own validated EPS (sum of the last 4 quarters) | Valuation context uses audited numbers, not a third-party estimate; market data is optional and failure-tolerant. |
+| Structured direction fields (`revenue_direction`, `margin_direction`) | Machine-readable forecasts that can be compared across runs (consistency evaluation). |
 | Every request, tool call and metric stored in MySQL | Full audit trail; `GET /forecast/{request_id}` returns the request, response and tool trace. |
 
 ### Data sources
@@ -115,9 +143,18 @@ with no LLM calls.
 | **Ground** | Each statement must match an excerpt (at least 80% word coverage). Unsupported ones are removed; quarter and speaker are corrected from the source chunk |
 | Output | JSON with the insights, a grounding summary and evidence excerpts (quarter, page, speaker, role) |
 
+### MarketDataTool (`app/tools/market_data.py`, optional bonus)
+
+| Step | How |
+|---|---|
+| Quote | `yfinance` `fast_info` for `TCS.NS` (NSE): price, previous close, 52-week high/low, 50/200-day averages, 1-year change, market cap |
+| Valuation | Trailing EPS = sum of the last four quarters' validated EPS (Q3 FY26–Q2 FY27); P/E = price / TTM EPS |
+| Robustness | Cached for 5 minutes. On any failure it returns `available: false`, and the forecast continues with a note in `data_gaps`. `MARKET_DATA_ENABLED=false` turns it off |
+| Output | JSON snapshot with `as_of_utc` and source; attached to the result as `market_snapshot` by code |
+
 ### The agent (`app/agent/`)
 
-A LangChain v1 `create_agent` graph with the configured chat model, both tools, and
+A LangChain v1 `create_agent` graph with the configured chat model, all three tools, and
 `response_format=ToolStrategy(AgentForecast)`. Invalid output is returned to the model with the
 validation error so it retries. A callback handler logs each LLM and tool call live and records
 the tool calls for MySQL.
@@ -125,11 +162,11 @@ the tool calls for MySQL.
 **Master prompt** (full text in [`app/agent/prompts.py`](app/agent/prompts.py)) sets the role
 (senior equity analyst covering TCS) and the fiscal calendar, then prescribes the steps:
 
-1. **Gather** with both tools in parallel (4 standard transcript topics).
+1. **Gather** with all three tools in parallel (4 standard transcript topics).
 2. **Trends** over the last 3 quarters: CC growth, margin drivers, TCV, headcount, attrition.
 3. **At most one follow-up** search.
 4. **Cross-check** management's statements against the numbers.
-5. **Forecast** the direction of revenue and margin, with a confidence level.
+5. **Forecast**: set `revenue_direction` and `margin_direction`, explain them, give a confidence level and market context. No investment advice and no price targets.
 
 Its grounding rules: use only tool output; copy quotes word for word from verified statements;
 name a source (quarter, and speaker or fact sheet) for every risk and opportunity; record gaps
@@ -139,7 +176,8 @@ instead of guessing; and do not restate the per-quarter numbers, because code at
 - Attaches validated `quarterly_metrics` for the analysed quarters.
 - Corrects `forecast_period` if it isn't the quarter after the latest one.
 - Verifies every key quote against all transcript chunks.
-- Reports all of this in `grounding`.
+- Attaches the `market_snapshot`.
+- Reports all of this in `grounding`; token counts go in `usage`.
 
 ### Output schema (`app/schemas/forecast.py`)
 
@@ -151,7 +189,8 @@ instead of guessing; and do not restate the per-quarter numbers, because code at
   "generated_at": "2026-11-06T10:00:00Z",
   "latency_ms": 95000,
   "tool_calls": ["financial_data_extractor({})", "qualitative_analysis({'queries': [...]})"],
-  "grounding": {"accounting_checks": "63/63 passed", "quarters_verified": 3, "quotes_verified": 4, "quotes_removed_as_unsupported": []},
+  "grounding": {"accounting_checks": "63/63 passed", "quarters_verified": 3, "quotes_verified": 4, "quotes_removed_as_unsupported": [], "market_data_available": true},
+  "usage": {"llm_calls": 4, "input_tokens": 18950, "output_tokens": 2410, "tool_calls": 3},
   "result": {
     "company": "Tata Consultancy Services (TCS)",
     "forecast_period": "Q3 FY27",
@@ -161,7 +200,9 @@ instead of guessing; and do not restate the per-quarter numbers, because code at
     "management_outlook": {"summary": "...", "sentiment": "cautiously_optimistic", "key_quotes": [{"text": "...", "quarter": "Q2 FY27", "speaker": "Samir Seksaria"}]},
     "risks": [{"title": "...", "detail": "...", "source": "Q2 FY27 earnings call, Samir Seksaria"}],
     "opportunities": [{"title": "...", "detail": "...", "source": "Q1 FY27 earnings call, K Krithivasan"}],
-    "forecast": {"revenue_outlook": "...", "margin_outlook": "...", "overall_outlook": "...", "confidence": "medium"},
+    "forecast": {"revenue_direction": "flat", "margin_direction": "contraction", "revenue_outlook": "...", "margin_outlook": "...", "overall_outlook": "...", "confidence": "medium"},
+    "market_context": "...",
+    "market_snapshot": {"available": true, "symbol": "TCS.NS", "price": 0.0, "day_change_pct": 0.0, "fifty_two_week_high": 0.0, "fifty_two_week_low": 0.0, "eps_ttm_inr": 151.71, "pe_ttm": 0.0, "as_of_utc": "..."},
     "data_gaps": []
   }
 }
@@ -178,8 +219,8 @@ instead of guessing; and do not restate the per-quarter numbers, because code at
 | Python | 3.10 – 3.12 recommended | `python --version` |
 | Git | any | `git --version` |
 | MySQL Server | 8.0 | `mysql --version` |
-| **Ollama** (default provider) | latest; 16 GB RAM recommended (8 GB works with `qwen3:4b`) | [ollama.com/download](https://ollama.com/download), then `ollama --version` |
-| *or* Google Gemini API key | only if `LLM_PROVIDER=gemini` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| **Google Gemini API key** (default provider) | free tier works (about 5 requests per forecast) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| *or* Ollama (optional local provider) | 16 GB RAM and ideally a GPU; on CPU a forecast can take 15+ minutes | [ollama.com/download](https://ollama.com/download) |
 
 ### Step 1: Clone and create a virtual environment
 
@@ -228,7 +269,7 @@ EXIT;
 
 The app creates its tables automatically on startup.
 
-### Step 2b: Install Ollama and pull the models (default provider)
+### Step 2b (optional): Use local models with Ollama instead of Gemini
 
 Install Ollama from <https://ollama.com/download> and make sure the app is running. Then:
 
@@ -239,7 +280,7 @@ ollama pull nomic-embed-text
 
 `qwen3:8b` (about 5 GB) is the chat model with tool calling; `nomic-embed-text` (about 270 MB)
 creates the transcript embeddings. On an 8 GB RAM machine use `qwen3:4b` and set
-`OLLAMA_MODEL=qwen3:4b` in `.env`. Skip this step if you use Gemini.
+`OLLAMA_MODEL=qwen3:4b` in `.env`, and set `LLM_PROVIDER=ollama`. Skip this step if you use Gemini.
 
 ### Step 3: Configure credentials
 
@@ -254,11 +295,12 @@ Edit `.env`:
 
 | Variable | Value |
 |---|---|
-| `LLM_PROVIDER` | `ollama` (default) or `gemini` |
-| `OLLAMA_MODEL` / `OLLAMA_EMBEDDING_MODEL` | `qwen3:8b` / `nomic-embed-text` (the models pulled in Step 2b) |
-| `OLLAMA_NUM_CTX` | context window, default `16384` |
-| `GOOGLE_API_KEY` | only for Gemini |
-| `GEMINI_MODEL` | only for Gemini; `python -m app.check` lists the models your key can use |
+| `LLM_PROVIDER` | `gemini` (default) or `ollama` |
+| `GOOGLE_API_KEY` | your Gemini API key |
+| `GEMINI_MODEL` | default `gemini-3.6-flash`; `python -m app.check` lists the models your key can use |
+| `OLLAMA_MODEL` / `OLLAMA_EMBEDDING_MODEL` | only for Ollama: `qwen3:8b` / `nomic-embed-text` |
+| `MARKET_DATA_ENABLED` / `MARKET_SYMBOL` | `true` / `TCS.NS` (MarketDataTool; no key needed) |
+| `FORECAST_TIMEOUT_S` | maximum seconds per forecast request (default `600`, returns HTTP 504) |
 | `MYSQL_HOST` / `MYSQL_PORT` | `localhost` / `3306` |
 | `MYSQL_USER` / `MYSQL_PASSWORD` | the user from Step 2 |
 | `MYSQL_DATABASE` | `tcs_forecast` |
@@ -329,7 +371,9 @@ curl -X POST http://127.0.0.1:8000/forecast -H "Content-Type: application/json" 
   -d '{"task": "Analyze the financial reports and transcripts for the last three quarters and provide a qualitative forecast for the upcoming quarter."}'
 ```
 
-Sending `{}` uses the example task from the assignment. A request takes about 30–90 seconds.
+Sending `{}` uses the example task from the assignment. With Gemini a request takes about
+1–2 minutes. Errors return JSON with the `request_id` (logged in MySQL): HTTP 422 invalid
+input, 429 LLM quota exhausted, 504 timeout, 500 other failures.
 
 ### Endpoints
 
@@ -349,14 +393,20 @@ SELECT request_id, sequence, tool_name, duration_ms, error FROM tool_calls ORDER
 SELECT quarter, revenue_cr, operating_margin_pct, net_profit_cr, verified, extraction_method FROM financial_metrics ORDER BY quarter;
 ```
 
-### Check extraction accuracy
+### Evaluate
 
 ```bash
-python -m eval.extraction
+python -m eval.run
+python -m eval.run --consistency 3
 ```
 
-This compares every extracted value with `eval/ground_truth.json` and prints a per-field report
-(currently 33/33).
+The first command writes [`eval/report.md`](eval/report.md). It covers extraction accuracy against
+`eval/ground_truth.json` (no LLM), retrieval hit@3 on 12 paraphrased questions (hybrid vs vector-only
+vs BM25-only, embeddings only), and faithfulness checks on `sample_output.json` (metrics, quotes,
+sources, forecast period, no investment advice).
+
+The second also runs the agent 3 times and measures agreement of the forecast directions. It uses
+about 15 LLM requests. `python -m eval.extraction` prints the per-field extraction report alone.
 
 ### Run the tests
 
@@ -364,8 +414,9 @@ This compares every extracted value with `eval/ground_truth.json` and prints a p
 pytest -q
 ```
 
-The tests use SQLite and a scripted fake LLM, so they need neither MySQL nor an LLM. They
-include a run of the real agent graph that chains both tools into the structured output.
+The tests use SQLite, mocked quotes and a scripted fake LLM, so they need neither MySQL, network
+access nor an LLM. They include runs of the real agent graph, the parsers on real fact-sheet text,
+quote grounding, thread safety, timeouts and quota handling.
 
 ---
 
@@ -387,6 +438,7 @@ app/
     factsheet_parser.py      regex parsers + accounting-identity validation
     qualitative_analysis.py  QualitativeAnalysisTool (hybrid RAG, statement grounding)
     grounding.py             quote verification against transcript chunks
+    market_data.py           MarketDataTool (yfinance + P/E from validated EPS)
     quarters.py              fiscal-quarter helpers
   ingestion/
     pdf.py                   PyMuPDF text extraction
@@ -396,7 +448,7 @@ app/
   schemas/                   Pydantic models (tool outputs, API request/response)
   db/                        SQLAlchemy models (request_logs, tool_calls, financial_metrics)
 data/manifest.json           document list with source URLs
-eval/                        ground truth + extraction accuracy script
+eval/                        ground truth, retrieval questions, evaluation suite and report
 tests/                       pytest suite (+ real fact-sheet page text in tests/fixtures)
 ```
 
@@ -413,5 +465,6 @@ tests/                       pytest suite (+ real fact-sheet page text in tests/
 | `429` with "quota exhausted" (per day) | Free-tier keys allow a limited number of requests per model per day (it can be as low as 20); quotas reset at midnight Pacific time. A forecast uses about 4–5 requests. Set `GEMINI_TOOL_MODEL` to a second model (e.g. a flash-lite model) to spread the load, or enable billing |
 | `No transcript excerpts found` | Run `python -m app.ingestion` |
 | Download blocked (`response is not a PDF`) | Save the PDF manually into `data/raw/` (see Step 4) |
-
-AI usage notes are in [AI_USAGE.md](AI_USAGE.md). They will be completed in V3.
+| `Live market data unavailable` in `data_gaps` | Yahoo Finance was unreachable or rate-limited; the forecast is still complete. Retry later or set `MARKET_DATA_ENABLED=false` |
+| HTTP 504 | The forecast exceeded `FORECAST_TIMEOUT_S` (common with Ollama on CPU); raise the limit or use Gemini |
+| Ctrl+C does not stop a run on Windows | Close the window, or end `python` in Task Manager |

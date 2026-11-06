@@ -27,6 +27,7 @@ class ForecastRun:
     trace: list[str] = field(default_factory=list)
     tool_calls: list[dict] = field(default_factory=list)
     grounding: dict = field(default_factory=dict)
+    usage: dict = field(default_factory=dict)
 
 
 @lru_cache
@@ -102,6 +103,21 @@ def _verify_quotes(out: AgentForecast, grounding: dict) -> None:
         out.data_gaps.append(f"{len(removed)} quote(s) could not be found in the transcripts and were removed.")
 
 
+def _attach_market(out: AgentForecast, grounding: dict) -> dict | None:
+    """Live price context, attached by code (cached by the MarketDataTool)."""
+    from app.config import get_settings
+    from app.tools.market_data import get_market_snapshot
+
+    if not get_settings().market_data_enabled:
+        return None
+    snap = get_market_snapshot()
+    grounding["market_data_available"] = bool(snap.get("available"))
+    if not snap.get("available"):
+        out.market_context = None
+        out.data_gaps.append(f"Live market data unavailable: {snap.get('error', 'unknown error')}")
+    return snap
+
+
 def run_forecast(task: str, progress: ProgressLogger | None = None) -> ForecastRun:
     """Run the agent on a task, then ground its output. Pass `progress` to keep the
     tool-call records even if the run fails."""
@@ -127,5 +143,7 @@ def run_forecast(task: str, progress: ProgressLogger | None = None) -> ForecastR
     grounding: dict = {}
     snapshots = _attach_metrics(out, grounding)
     _verify_quotes(out, grounding)
-    result = ForecastResult(**out.model_dump(), quarterly_metrics=snapshots)
-    return ForecastRun(result=result, trace=trace, tool_calls=progress.tool_calls, grounding=grounding)
+    market = _attach_market(out, grounding)
+    result = ForecastResult(**out.model_dump(), quarterly_metrics=snapshots, market_snapshot=market)
+    return ForecastRun(result=result, trace=trace, tool_calls=progress.tool_calls,
+                       grounding=grounding, usage=progress.usage)

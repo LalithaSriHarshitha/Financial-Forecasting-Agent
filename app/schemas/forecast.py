@@ -72,6 +72,10 @@ class Insight(BaseModel):
 
 
 class Outlook(BaseModel):
+    revenue_direction: Literal["growth", "flat", "decline"] = Field(
+        description="Expected sequential (QoQ) revenue direction next quarter.")
+    margin_direction: Literal["expansion", "stable", "contraction"] = Field(
+        description="Expected QoQ operating-margin direction next quarter.")
     revenue_outlook: str = Field(description="Expected direction of revenue next quarter, with reasoning.")
     margin_outlook: str = Field(description="Expected direction of operating margin next quarter, with reasoning.")
     overall_outlook: str = Field(description="2-4 sentence qualitative forecast for the next quarter.")
@@ -89,15 +93,19 @@ class AgentForecast(BaseModel):
     risks: list[Insight]
     opportunities: list[Insight]
     forecast: Outlook
+    market_context: str | None = Field(
+        None, description="1-2 sentences on how the share-price/valuation context from market_data "
+        "relates to the outlook; null if market data was unavailable.")
     data_gaps: list[str] = Field(
         default_factory=list, description="Anything missing or uncertain in the source data."
     )
 
 
 class ForecastResult(AgentForecast):
-    """The API's result: the agent's analysis plus validated per-quarter metrics."""
+    """The API's result: the agent's analysis plus validated per-quarter metrics and market data."""
 
     quarterly_metrics: list[QuarterSnapshot] = Field(default_factory=list)
+    market_snapshot: dict | None = Field(None, description="Live price context attached by code.")
 
 
 class ForecastResponse(BaseModel):
@@ -108,4 +116,5 @@ class ForecastResponse(BaseModel):
     latency_ms: int
     tool_calls: list[str] = Field(default_factory=list, description="Tools the agent called, in order.")
     grounding: dict = Field(default_factory=dict, description="Results of the post-generation checks.")
+    usage: dict = Field(default_factory=dict, description="LLM calls and token counts for this request.")
     result: ForecastResult

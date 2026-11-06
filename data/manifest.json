@@ -1,0 +1,61 @@
+{
+  "company": "Tata Consultancy Services (TCS)",
+  "source_page": "https://www.screener.in/company/TCS/consolidated/#documents",
+  "note": "Fiscal year runs April-March. Q4 FY26 = Jan-Mar 2026, Q1 FY27 = Apr-Jun 2026, Q2 FY27 = Jul-Sep 2026. If a download fails, save the file manually into data/raw/ using the 'filename' below.",
+  "documents": [
+    {
+      "id": "q4fy26_factsheet",
+      "quarter": "Q4 FY26",
+      "period_end": "2026-03-31",
+      "type": "financial_report",
+      "title": "TCS Q4 FY26 Fact Sheet (quarterly financial results)",
+      "url": "https://www.tcs.com/content/dam/tcs/investor-relations/financial-statements/2025-26/q4/Presentations/Q4%202025-26%20Fact%20Sheet.pdf",
+      "filename": "TCS_Q4FY26_FactSheet.pdf"
+    },
+    {
+      "id": "q1fy27_factsheet",
+      "quarter": "Q1 FY27",
+      "period_end": "2026-06-30",
+      "type": "financial_report",
+      "title": "TCS Q1 FY27 Fact Sheet (quarterly financial results)",
+      "url": "https://www.tcs.com/content/dam/tcs/investor-relations/financial-statements/2026-27/q1/Presentations/Q1%202026-27%20Fact%20Sheet.pdf",
+      "filename": "TCS_Q1FY27_FactSheet.pdf"
+    },
+    {
+      "id": "q2fy27_factsheet",
+      "quarter": "Q2 FY27",
+      "period_end": "2026-09-30",
+      "type": "financial_report",
+      "title": "TCS Q2 FY27 Fact Sheet (quarterly financial results)",
+      "url": "https://www.tcs.com/content/dam/tcs/investor-relations/financial-statements/2026-27/q2/Presentations/Q2%202026-27%20Fact%20Sheet.pdf",
+      "filename": "TCS_Q2FY27_FactSheet.pdf"
+    },
+    {
+      "id": "q4fy26_transcript",
+      "quarter": "Q4 FY26",
+      "period_end": "2026-03-31",
+      "type": "earnings_call_transcript",
+      "title": "TCS Q4 FY26 earnings call transcript (Apr 2026)",
+      "url": "https://www.bseindia.com/stockinfo/AnnPdfOpen.aspx?Pname=07ae2d32-1050-4e80-96ff-eb2d98378d4e.pdf",
+      "filename": "TCS_Q4FY26_Transcript.pdf"
+    },
+    {
+      "id": "q1fy27_transcript",
+      "quarter": "Q1 FY27",
+      "period_end": "2026-06-30",
+      "type": "earnings_call_transcript",
+      "title": "TCS Q1 FY27 earnings call transcript (Jul 2026)",
+      "url": "https://www.bseindia.com/stockinfo/AnnPdfOpen.aspx?Pname=27523cab-de62-4f78-939a-6d9853bbd060.pdf",
+      "filename": "TCS_Q1FY27_Transcript.pdf"
+    },
+    {
+      "id": "q2fy27_transcript",
+      "quarter": "Q2 FY27",
+      "period_end": "2026-09-30",
+      "type": "earnings_call_transcript",
+      "title": "TCS Q2 FY27 earnings call transcript (Oct 2026)",
+      "url": "https://www.bseindia.com/stockinfo/AnnPdfOpen.aspx?Pname=7dc14216-f892-46f1-bf82-5c7b387a83b9.pdf",
+      "filename": "TCS_Q2FY27_Transcript.pdf"
+    }
+  ]
+}

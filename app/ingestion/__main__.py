@@ -33,7 +33,8 @@ def main() -> int:
     if missing:
         logger.warning("Missing files: %s", ", ".join(d.filename for d in missing))
 
-    logger.info("Step 2/2: building the transcript vector index (Gemini embeddings)")
+    logger.info("Step 2/2: building the transcript vector index (%s embeddings: %s)",
+                get_settings().llm_provider, get_settings().embedding_model_name)
     try:
         n = build_index()
     except Exception as exc:

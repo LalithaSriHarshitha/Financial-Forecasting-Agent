@@ -98,7 +98,9 @@ def build_index(rebuild: bool = True) -> int:
         raise RuntimeError("No transcript text found. Download the transcripts first.")
     store = get_vector_store()
     ids = [f"{c.metadata['doc_id']}-p{c.metadata['page']}-c{c.metadata['chunk']}" for c in chunks]
-    per_minute = get_settings().embed_requests_per_minute
+    s = get_settings()
+    # Gemini free tier counts every chunk as a request; local Ollama needs no pacing.
+    per_minute = s.embed_requests_per_minute if s.llm_provider == "gemini" else 10**9
     batch = max(1, min(20, per_minute))
     window_start, used = time.monotonic(), 0
     for start in range(0, len(chunks), batch):
@@ -132,5 +134,5 @@ def _add_with_retry(store: Chroma, docs: list[Document], ids: list[str], attempt
             if "429" not in str(exc) and "RESOURCE_EXHAUSTED" not in str(exc) or attempt == attempts:
                 raise
             delay = _retry_delay(exc)
-            logger.warning("Rate limited by Gemini (attempt %d/%d); retrying in %.0fs", attempt, attempts, delay)
+            logger.warning("Rate limited by the embedding API (attempt %d/%d); retrying in %.0fs", attempt, attempts, delay)
             time.sleep(delay)

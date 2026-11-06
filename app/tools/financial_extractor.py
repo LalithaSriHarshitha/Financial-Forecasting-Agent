@@ -1,7 +1,7 @@
 """FinancialDataExtractorTool.
 
 Reads TCS quarterly fact sheets (PDF), finds the consolidated income-statement
-table, and extracts key metrics per quarter with Gemini structured output.
+table, and extracts key metrics per quarter with LLM structured output.
 
 Pipeline per document:
   1. pdfplumber -> page text

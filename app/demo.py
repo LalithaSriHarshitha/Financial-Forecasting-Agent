@@ -37,7 +37,7 @@ def main() -> int:
     from app.db.repository import get_request_log
     from app.main import app
 
-    print(f"Running the forecast agent with {settings.gemini_model} (about 1-3 minutes) ...")
+    print(f"Running the forecast agent with {settings.chat_model_name} (a few minutes) ...")
     started = time.perf_counter()
     with TestClient(app) as client:  # startup creates the database and tables
         resp = client.post("/forecast", json={})

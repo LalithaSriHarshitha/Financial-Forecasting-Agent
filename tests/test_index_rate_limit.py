@@ -24,12 +24,26 @@ def test_build_index_paces_under_quota(monkeypatch, tmp_path):
     monkeypatch.setattr(index, "get_vector_store", lambda: store)
     monkeypatch.setattr(index.time, "sleep", sleeps.append)
     settings = index.get_settings()
+    monkeypatch.setattr(settings, "llm_provider", "gemini")
     monkeypatch.setattr(settings, "embed_requests_per_minute", 20)
     monkeypatch.setattr(settings, "chroma_dir", tmp_path / "chroma")
 
     assert index.build_index() == 50
     assert len(store.added) == 50
     assert len(sleeps) == 2  # 50 chunks at 20/minute -> two pauses
+
+
+def test_local_ollama_embeddings_are_not_paced(monkeypatch, tmp_path):
+    store, sleeps = FakeStore(), []
+    monkeypatch.setattr(index, "build_transcript_chunks", lambda: _chunks(50))
+    monkeypatch.setattr(index, "get_vector_store", lambda: store)
+    monkeypatch.setattr(index.time, "sleep", sleeps.append)
+    settings = index.get_settings()
+    monkeypatch.setattr(settings, "llm_provider", "ollama")
+    monkeypatch.setattr(settings, "chroma_dir", tmp_path / "chroma")
+
+    assert index.build_index() == 50
+    assert sleeps == []
 
 
 def test_add_with_retry_waits_for_suggested_delay(monkeypatch):

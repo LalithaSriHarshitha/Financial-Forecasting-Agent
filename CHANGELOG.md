@@ -6,6 +6,10 @@ V2 Intelligence, V3 Production and submission).
 ## [1.0.0] - 2026-11-06 - V1 Foundation
 
 ### Added
+- Provider switch: local models via **Ollama** (default) or Google Gemini (`LLM_PROVIDER`).
+- Batched multi-topic RAG with per-quarter retrieval (about 4 LLM calls per forecast).
+- Free-tier protections for Gemini: request pacing, 429 retries, quota errors returned as HTTP 429.
+- `python -m app.demo` one-command end-to-end run; database auto-created on startup.
 - FastAPI service with `GET /health`, `POST /forecast` and `GET /forecast/{request_id}`.
 - LangChain v1 tool-calling agent on Google Gemini with a step-by-step master prompt and
   `ToolStrategy` structured output (`ForecastResult` Pydantic schema).

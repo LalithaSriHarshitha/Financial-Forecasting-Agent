@@ -34,7 +34,7 @@ async def lifespan(_: FastAPI):
     except Exception as exc:
         logger.error("Cannot connect to the database. Check the MYSQL_* values in .env (%s)", exc)
         raise
-    logger.info("TCS Forecasting Agent v%s ready (model: %s)", __version__, settings.gemini_model)
+    logger.info("TCS Forecasting Agent v%s ready (model: %s)", __version__, settings.chat_model_name)
     yield
 
 
@@ -65,7 +65,9 @@ def health() -> dict:
     return {
         "status": "ok" if db_ok else "degraded",
         "version": __version__,
-        "model": settings.gemini_model,
+        "provider": settings.llm_provider,
+        "model": settings.chat_model_name,
+        "embedding_model": settings.embedding_model_name,
         "database": "connected" if db_ok else "unreachable",
         "documents_available": sum(d.exists for d in docs),
         "documents_expected": len(docs),
@@ -94,7 +96,7 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
             request_payload=req.model_dump(),
             status="error",
             error_message=f"{type(exc).__name__}: {exc}",
-            model=settings.gemini_model,
+            model=settings.chat_model_name,
             latency_ms=latency,
         )
         if _is_quota_error(exc):
@@ -102,8 +104,8 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
                 status_code=429,
                 detail={
                     "request_id": request_id,
-                    "error": "Gemini API quota exhausted. Wait for the quota to reset, set a model "
-                    "with a higher quota in GEMINI_MODEL / GEMINI_TOOL_MODEL, or enable billing.",
+                    "error": "LLM API quota exhausted. Wait for the quota to reset, use a model with a "
+                    "higher quota, or switch to a local model with LLM_PROVIDER=ollama.",
                     "provider_message": str(exc)[:500],
                 },
             ) from exc
@@ -115,7 +117,7 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
     response = ForecastResponse(
         request_id=request_id,
         status="success",
-        model=settings.gemini_model,
+        model=settings.chat_model_name,
         generated_at=datetime.now(timezone.utc),
         latency_ms=int((time.perf_counter() - started) * 1000),
         tool_calls=trace,
@@ -127,7 +129,7 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
         request_payload=req.model_dump(),
         status="success",
         response_payload=response.model_dump(mode="json"),
-        model=settings.gemini_model,
+        model=settings.chat_model_name,
         latency_ms=response.latency_ms,
     )
     return response

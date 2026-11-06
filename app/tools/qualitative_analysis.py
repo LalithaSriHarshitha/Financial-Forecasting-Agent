@@ -5,7 +5,7 @@ RAG over the earnings-call transcripts:
   2. Chroma returns the best chunks for that query from EVERY quarter's call
      (per-quarter retrieval, so a comparison across calls is always possible),
   3. duplicates are removed and the excerpts are grouped by quarter,
-  4. Gemini reads only those excerpts in ONE call and returns a structured
+  4. the LLM reads only those excerpts in ONE call and returns a structured
      `QualitativeInsights` object (themes, sentiment, forward-looking statements,
      risks, opportunities).
 
@@ -18,6 +18,7 @@ import logging
 
 from langchain_core.tools import tool
 
+from app.config import get_settings
 from app.ingestion.index import get_shared_vector_store
 from app.ingestion.manifest import documents_of_type
 from app.llm import get_chat_model
@@ -26,7 +27,6 @@ from app.tools.quarters import normalize_quarter, quarter_sort_key
 
 logger = logging.getLogger(__name__)
 
-PER_QUARTER_K = 3  # chunks per query per quarter
 MAX_QUERIES = 6
 
 ANALYSIS_PROMPT = """You are an equity research analyst covering Tata Consultancy Services (TCS).
@@ -49,9 +49,10 @@ def _transcript_quarters() -> list[str]:
     return sorted({d.quarter for d in documents_of_type("earnings_call_transcript")}, key=quarter_sort_key)
 
 
-def retrieve(queries: list[str], quarter: str | None = None, k: int = PER_QUARTER_K):
+def retrieve(queries: list[str], quarter: str | None = None, k: int | None = None):
     """Best chunks for each query from each quarter (or one quarter), de-duplicated."""
     store = get_shared_vector_store()
+    k = k or get_settings().rag_chunks_per_quarter
     quarters = [normalize_quarter(quarter)] if quarter else _transcript_quarters()
     vectors = store.embeddings.embed_documents(queries)  # one embedding request for all queries
     seen, docs = set(), []

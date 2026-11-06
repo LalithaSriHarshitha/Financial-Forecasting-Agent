@@ -6,10 +6,10 @@
 
 | Layer | Choice |
 |---|---|
-| LLM provider | Google Gemini (chat model configurable via `GEMINI_MODEL`) |
+| LLM provider | Local models via Ollama (default: `qwen3:8b`) or Google Gemini, chosen with `LLM_PROVIDER` |
 | Agent framework | LangChain v1 `create_agent` (tool calling) |
 | Structured output | `ToolStrategy` over Pydantic schemas, with automatic retry on validation errors |
-| Embeddings | `gemini-embedding-001` |
+| Embeddings | `nomic-embed-text` (Ollama) or `gemini-embedding-001` |
 | Vector database | Chroma (local, persistent) |
 | PDF parsing | pdfplumber (OCR fallback planned for V2) |
 
@@ -31,3 +31,9 @@ excerpts retrieved by the QualitativeAnalysisTool.
 
 This project was built with an AI coding assistant (Claude) for planning, code generation
 and tests. Design decisions and verification are documented in the README and the release plan.
+
+## Provider trade-off (found while building V1)
+
+Gemini's free tier capped the project at 20 chat requests per model per day, too few for repeated
+forecasts. Ollama was added as the default provider: no key, no quotas, data stays local. The cost is
+slower generation and the weaker reasoning of an 8B model. Gemini remains one setting away.

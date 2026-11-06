@@ -1,7 +1,9 @@
 """Application settings, loaded from environment variables / the .env file."""
 
+import re
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -14,6 +16,19 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env", env_file_encoding="utf-8", extra="ignore"
     )
+
+    # Which LLM/embedding provider to use: "ollama" (local, no key) or "gemini" (Google API).
+    llm_provider: Literal["ollama", "gemini"] = Field(default="ollama", alias="LLM_PROVIDER")
+
+    # Ollama (https://ollama.com) - local models
+    ollama_base_url: str = Field(default="http://localhost:11434", alias="OLLAMA_BASE_URL")
+    ollama_model: str = Field(default="qwen3:8b", alias="OLLAMA_MODEL")
+    ollama_tool_model: str | None = Field(default=None, alias="OLLAMA_TOOL_MODEL")
+    ollama_embedding_model: str = Field(default="nomic-embed-text", alias="OLLAMA_EMBEDDING_MODEL")
+    ollama_num_ctx: int = Field(default=16384, alias="OLLAMA_NUM_CTX")
+
+    # RAG
+    rag_chunks_per_quarter: int = Field(default=2, alias="RAG_CHUNKS_PER_QUARTER")
 
     # Gemini
     google_api_key: str = Field(default="", alias="GOOGLE_API_KEY")
@@ -77,9 +92,28 @@ class Settings(BaseSettings):
     def manifest_path(self) -> Path:
         return self.data_path / "manifest.json"
 
+    # ---- provider-aware names ----
+    @property
+    def chat_model_name(self) -> str:
+        return self.ollama_model if self.llm_provider == "ollama" else self.gemini_model
+
+    @property
+    def tool_model_name(self) -> str:
+        if self.llm_provider == "ollama":
+            return self.ollama_tool_model or self.ollama_model
+        return self.gemini_tool_model or self.gemini_model
+
+    @property
+    def embedding_model_name(self) -> str:
+        if self.llm_provider == "ollama":
+            return self.ollama_embedding_model
+        return self.gemini_embedding_model
+
     @property
     def chroma_path(self) -> Path:
-        return self._abs(self.chroma_dir)
+        """One index per embedding model, so switching providers never mixes vectors."""
+        slug = re.sub(r"[^A-Za-z0-9._-]+", "_", f"{self.llm_provider}_{self.embedding_model_name}")
+        return self._abs(self.chroma_dir) / slug
 
 
 @lru_cache

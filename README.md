@@ -2,7 +2,8 @@
 
 An AI agent, served through FastAPI, that reads **Tata Consultancy Services (TCS)** quarterly
 financial reports and earnings-call transcripts and returns a **structured, qualitative
-business-outlook forecast** for the next quarter. Every request and its JSON result are
+business-outlook forecast** for the next quarter. It runs on **local models via Ollama**
+(default; no API key or quotas) or on **Google Gemini**, selected with one setting. Every request and its JSON result are
 logged to **MySQL 8.0**.
 
 > **Current release: V1 (Foundation).** The pipeline runs end to end. V2 adds robust table
@@ -16,7 +17,7 @@ logged to **MySQL 8.0**.
 ### What it does
 
 `POST /forecast` takes an analytical task (for example *"Analyze the last three quarters and
-forecast the next one"*). A LangChain tool-calling agent powered by **Google Gemini** then:
+forecast the next one"*). A LangChain tool-calling agent (Ollama or Gemini) then:
 
 1. calls **FinancialDataExtractorTool** to get revenue, operating margin, net profit and EPS for
    every quarter in the fact sheets, plus QoQ and YoY growth,
@@ -31,7 +32,7 @@ forecast the next one"*). A LangChain tool-calling agent powered by **Google Gem
 ```mermaid
 flowchart LR
     U[Client] -->|POST /forecast| API[FastAPI]
-    API --> AG[LangChain agent<br/>Gemini + master prompt]
+    API --> AG[LangChain agent<br/>Ollama or Gemini + master prompt]
     AG -->|tool call| FE[FinancialDataExtractorTool]
     AG -->|tool calls| QA[QualitativeAnalysisTool]
     FE --> PDF[(Fact sheet PDFs<br/>data/raw)]
@@ -75,7 +76,7 @@ Q2 FY27 = Jul–Sep 2026. The forecast target is **Q3 FY27 (Oct–Dec 2026)**.
 |---|---|
 | Read PDF | `pdfplumber` extracts text per page |
 | Find the table | Pages are scored on keywords ("Ind AS", "Consolidated", "Income Statement", "Revenue", "Net Profit", "Earnings per share"); the best page is chosen |
-| Extract | Gemini (temperature 0) fills an `ExtractedStatement` Pydantic schema with every quarter column on that page |
+| Extract | The LLM (temperature 0) fills an `ExtractedStatement` Pydantic schema with every quarter column on that page |
 | Validate | Operating and net margins are recomputed from the extracted absolute values |
 | Merge and trend | Results from all fact sheets are merged (newest wins); QoQ and YoY growth and margin change in bps are computed in Python |
 | Output | JSON: `metrics`, `trends`, `sources` (document + page per quarter), `errors` |
@@ -84,14 +85,14 @@ Q2 FY27 = Jul–Sep 2026. The forecast target is **Q3 FY27 (Oct–Dec 2026)**.
 
 | Step | How |
 |---|---|
-| Index (offline) | Transcripts split into ~1,500-character chunks (200 overlap), tagged with quarter and page, embedded with `gemini-embedding-001`, stored in Chroma |
+| Index (offline) | Transcripts split into ~1,500-character chunks (200 overlap), tagged with quarter and page, embedded with `nomic-embed-text` (Ollama) or `gemini-embedding-001`, stored in Chroma |
 | Retrieve | The agent passes all its topics in one call. Each query is embedded once, and the top 3 chunks **per quarter** are retrieved, so every call is represented. Results are de-duplicated and ordered by quarter |
-| Analyse | Gemini reads **only** the retrieved excerpts in one call and fills `QualitativeInsights`: themes (with quarters), sentiment and how it changed, forward-looking statements, risks, opportunities |
+| Analyse | The LLM reads **only** the retrieved excerpts in one call and fills `QualitativeInsights`: themes (with quarters), sentiment and how it changed, forward-looking statements, risks, opportunities |
 | Output | JSON with the insights plus the evidence excerpts (quarter, page) |
 
 ### The agent (`app/agent/`)
 
-A LangChain v1 `create_agent` graph with Gemini, both tools, and `response_format=ToolStrategy(ForecastResult)`.
+A LangChain v1 `create_agent` graph with the configured chat model (Ollama or Gemini), both tools, and `response_format=ToolStrategy(ForecastResult)`.
 
 **Master prompt** (full text in [`app/agent/prompts.py`](app/agent/prompts.py)). In short, it:
 
@@ -138,7 +139,8 @@ A LangChain v1 `create_agent` graph with Gemini, both tools, and `response_forma
 | Python | 3.10 – 3.12 recommended | `python --version` |
 | Git | any | `git --version` |
 | MySQL Server | 8.0 | `mysql --version` |
-| Google Gemini API key | free tier works | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| **Ollama** (default provider) | latest; 16 GB RAM recommended (8 GB works with `qwen3:4b`) | [ollama.com/download](https://ollama.com/download), then `ollama --version` |
+| *or* Google Gemini API key | only if `LLM_PROVIDER=gemini` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 
 ### Step 1: Clone and create a virtual environment
 
@@ -187,6 +189,19 @@ EXIT;
 
 The app creates its tables automatically on startup.
 
+### Step 2b: Install Ollama and pull the models (default provider)
+
+Install Ollama from <https://ollama.com/download> and make sure the app is running. Then:
+
+```bash
+ollama pull qwen3:8b
+ollama pull nomic-embed-text
+```
+
+`qwen3:8b` (about 5 GB) is the chat model with tool calling; `nomic-embed-text` (about 270 MB)
+creates the transcript embeddings. On an 8 GB RAM machine use `qwen3:4b` and set
+`OLLAMA_MODEL=qwen3:4b` in `.env`. Skip this step if you use Gemini.
+
 ### Step 3: Configure credentials
 
 ```bash
@@ -200,9 +215,11 @@ Edit `.env`:
 
 | Variable | Value |
 |---|---|
-| `GOOGLE_API_KEY` | your Gemini API key |
-| `GEMINI_MODEL` | chat model id (default `gemini-3.6-flash`; `python -m app.check` lists the models your key can use) |
-| `GEMINI_EMBEDDING_MODEL` | `models/gemini-embedding-001` |
+| `LLM_PROVIDER` | `ollama` (default) or `gemini` |
+| `OLLAMA_MODEL` / `OLLAMA_EMBEDDING_MODEL` | `qwen3:8b` / `nomic-embed-text` (the models pulled in Step 2b) |
+| `OLLAMA_NUM_CTX` | context window, default `16384` |
+| `GOOGLE_API_KEY` | only for Gemini |
+| `GEMINI_MODEL` | only for Gemini; `python -m app.check` lists the models your key can use |
 | `MYSQL_HOST` / `MYSQL_PORT` | `localhost` / `3306` |
 | `MYSQL_USER` / `MYSQL_PASSWORD` | the user from Step 2 |
 | `MYSQL_DATABASE` | `tcs_forecast` |
@@ -228,7 +245,11 @@ python -m app.ingestion --skip-download
 python -m app.check
 ```
 
-This checks the Gemini key and model, the MySQL connection and tables, the documents and the index.
+This checks the LLM provider (Ollama running and models pulled, or the Gemini key and model),
+the MySQL connection and tables, the documents and the index.
+
+Each embedding model gets its own index folder under `data/chroma/`, so after switching
+`LLM_PROVIDER` run `python -m app.ingestion --skip-download` once to build the index for the new provider.
 
 ---
 
@@ -292,7 +313,7 @@ SELECT request_id, status, latency_ms, created_at FROM request_logs ORDER BY id 
 pytest -q
 ```
 
-The tests use SQLite and a scripted fake LLM, so they need neither MySQL nor a Gemini key. They
+The tests use SQLite and a scripted fake LLM, so they need neither MySQL nor an LLM. They
 include a run of the real agent graph that chains both tools into the structured output.
 
 ---
@@ -303,7 +324,7 @@ include a run of the real agent graph that chains both tools into the structured
 app/
   main.py                  FastAPI app and endpoints
   config.py                settings from .env
-  llm.py                   Gemini chat + embedding factories
+  llm.py                   provider switch: Ollama or Gemini chat + embeddings
   check.py                 setup verification (python -m app.check)
   agent/
     prompts.py             master prompt

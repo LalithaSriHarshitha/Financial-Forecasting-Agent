@@ -19,7 +19,7 @@ def small_index(monkeypatch, tmp_path):
     monkeypatch.setattr(index.get_settings(), "chroma_dir", tmp_path / "chroma")
     monkeypatch.setattr(qa, "_transcript_quarters", lambda: ["Q1 FY27", "Q2 FY27"])
     docs = [
-        Document(page_content=f"{q} chunk {i}", metadata={"doc_id": q, "quarter": q, "page": i, "chunk": 0})
+        Document(page_content=f"{q} chunk {i}", metadata={"doc_id": q, "quarter": q, "page": i, "turn": i, "chunk": 0, "role": "management"})
         for q in ("Q1 FY27", "Q2 FY27")
         for i in range(6)
     ]
@@ -51,7 +51,7 @@ def test_parallel_retrieval_is_thread_safe(small_index):
 def test_retrieval_covers_every_quarter_without_duplicates(small_index):
     docs = qa.retrieve(["demand", "margins"])
     quarters = {d.metadata["quarter"] for d in docs}
-    keys = [(d.metadata["doc_id"], d.metadata["page"]) for d in docs]
+    keys = [(d.metadata["doc_id"], d.metadata["turn"]) for d in docs]
     assert quarters == {"Q1 FY27", "Q2 FY27"}
     assert len(keys) == len(set(keys))
     assert [d.metadata["quarter"] for d in docs] == sorted(
@@ -60,7 +60,7 @@ def test_retrieval_covers_every_quarter_without_duplicates(small_index):
 
 
 def test_tool_errors_are_returned_not_raised(monkeypatch):
-    def boom(queries, quarter=None):
+    def boom(queries, quarter=None, speaker_role=None):
         raise RuntimeError("index missing")
 
     monkeypatch.setattr(qa, "analyze", boom)

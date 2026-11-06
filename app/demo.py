@@ -63,9 +63,14 @@ def main() -> int:
     print(f"Forecast period      : {result['forecast_period']}")
     print(f"Quarters analysed    : {', '.join(result['quarters_analyzed'])}")
     for m in result["quarterly_metrics"]:
-        print(f"   {m['quarter']}: revenue {m['revenue_cr']} cr, op margin {m['operating_margin_pct']}%, "
-              f"net profit {m['net_profit_cr']} cr, EPS {m['eps_inr']}")
+        print(f"   {m['quarter']}: revenue {m['revenue_cr']:,.0f} cr (QoQ {m['revenue_growth_qoq_pct']}%, "
+              f"CC {m['cc_growth_qoq_pct']}%), op margin {m['operating_margin_pct']}%, "
+              f"net profit {m['net_profit_cr']:,.0f} cr, TCV ${m['order_book_tcv_usd_bn']} bn, "
+              f"attrition {m['attrition_ltm_pct']}%  [{'verified' if m['verified'] else 'UNVERIFIED'}]")
     print(f"Management sentiment : {result['management_outlook']['sentiment']}")
+    g = body.get("grounding", {})
+    print(f"Grounding            : accounting checks {g.get('accounting_checks')}, "
+          f"quotes verified {g.get('quotes_verified')}, removed {len(g.get('quotes_removed_as_unsupported') or [])}")
     print(f"Risks / opportunities: {len(result['risks'])} / {len(result['opportunities'])}")
     print(f"Outlook              : {result['forecast']['overall_outlook']}")
     print(f"Confidence           : {result['forecast']['confidence']}")

@@ -27,11 +27,24 @@ class ForecastRequest(BaseModel):
 
 
 class QuarterSnapshot(BaseModel):
+    """Validated figures for one quarter, filled by code from the FinancialDataExtractorTool
+    (never written by the LLM)."""
+
     quarter: str
     revenue_cr: float | None = None
+    revenue_growth_qoq_pct: float | None = None
+    revenue_growth_yoy_pct: float | None = None
+    cc_growth_qoq_pct: float | None = None
     operating_margin_pct: float | None = None
+    employee_cost_pct: float | None = None
     net_profit_cr: float | None = None
+    net_margin_pct: float | None = None
     eps_inr: float | None = None
+    order_book_tcv_usd_bn: float | None = None
+    headcount: int | None = None
+    attrition_ltm_pct: float | None = None
+    verified: bool = False
+    source: str | None = None
 
 
 class FinancialTrend(BaseModel):
@@ -41,8 +54,9 @@ class FinancialTrend(BaseModel):
 
 
 class Quote(BaseModel):
-    text: str = Field(description="Quote taken from the transcript excerpts returned by the tool.")
+    text: str = Field(description="Management quote copied word for word from the tool's verified statements.")
     quarter: str
+    speaker: str | None = None
 
 
 class ManagementOutlook(BaseModel):
@@ -64,11 +78,12 @@ class Outlook(BaseModel):
     confidence: Literal["low", "medium", "high"]
 
 
-class ForecastResult(BaseModel):
+class AgentForecast(BaseModel):
+    """What the agent writes. Numbers per quarter are attached afterwards by code."""
+
     company: str = "Tata Consultancy Services (TCS)"
     forecast_period: str = Field(description="The quarter being forecast, e.g. 'Q3 FY27'.")
-    quarters_analyzed: list[str]
-    quarterly_metrics: list[QuarterSnapshot]
+    quarters_analyzed: list[str] = Field(description="The (up to three) latest quarters analysed, oldest first.")
     financial_trends: list[FinancialTrend]
     management_outlook: ManagementOutlook
     risks: list[Insight]
@@ -79,6 +94,12 @@ class ForecastResult(BaseModel):
     )
 
 
+class ForecastResult(AgentForecast):
+    """The API's result: the agent's analysis plus validated per-quarter metrics."""
+
+    quarterly_metrics: list[QuarterSnapshot] = Field(default_factory=list)
+
+
 class ForecastResponse(BaseModel):
     request_id: str
     status: Literal["success"]
@@ -86,4 +107,5 @@ class ForecastResponse(BaseModel):
     generated_at: datetime
     latency_ms: int
     tool_calls: list[str] = Field(default_factory=list, description="Tools the agent called, in order.")
+    grounding: dict = Field(default_factory=dict, description="Results of the post-generation checks.")
     result: ForecastResult

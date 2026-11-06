@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+INDEX_VERSION = 2  # bump when chunking changes, so a fresh index is built
 
 
 class Settings(BaseSettings):
@@ -114,7 +115,7 @@ class Settings(BaseSettings):
     @property
     def chroma_path(self) -> Path:
         """One index per embedding model, so switching providers never mixes vectors."""
-        slug = re.sub(r"[^A-Za-z0-9._-]+", "_", f"{self.llm_provider}_{self.embedding_model_name}")
+        slug = re.sub(r"[^A-Za-z0-9._-]+", "_", f"{self.llm_provider}_{self.embedding_model_name}_v{INDEX_VERSION}")
         return self._abs(self.chroma_dir) / slug
 
 

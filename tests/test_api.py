@@ -12,7 +12,12 @@ def test_health():
 
 
 def test_forecast_success_is_logged(monkeypatch, sample_result):
-    monkeypatch.setattr(main, "run_forecast", lambda task: (sample_result, ["financial_data_extractor({})"]))
+    from app.agent.forecast_agent import ForecastRun
+
+    run = ForecastRun(result=sample_result, trace=["financial_data_extractor({})"],
+                      tool_calls=[{"tool": "financial_data_extractor", "input": "{}", "duration_ms": 5, "output_chars": 100}],
+                      grounding={"quotes_verified": 1})
+    monkeypatch.setattr(main, "run_forecast", lambda task, progress=None: run)
     with TestClient(main.app) as client:
         resp = client.post("/forecast", json={"task": "Forecast the next quarter for TCS"})
         assert resp.status_code == 200
@@ -26,10 +31,12 @@ def test_forecast_success_is_logged(monkeypatch, sample_result):
 
         logged = client.get(f"/forecast/{body['request_id']}").json()
         assert logged["request"]["task"] == "Forecast the next quarter for TCS"
+        assert logged["tool_calls"][0]["tool"] == "financial_data_extractor"
+        assert body["grounding"]["quotes_verified"] == 1
 
 
 def test_forecast_error_is_logged(monkeypatch):
-    def boom(task):
+    def boom(task, progress=None):
         raise RuntimeError("LLM unavailable")
 
     monkeypatch.setattr(main, "run_forecast", boom)
@@ -47,7 +54,7 @@ def test_rejects_too_short_task():
 
 
 def test_quota_errors_map_to_429(monkeypatch):
-    def quota(task):
+    def quota(task, progress=None):
         raise RuntimeError("429 RESOURCE_EXHAUSTED: requests per day limit exceeded")
 
     monkeypatch.setattr(main, "run_forecast", quota)

@@ -1,0 +1,37 @@
+Ind AS Income Statement - Consolidated
+
+
+
+                                                                            ₹ Crore               % of Revenue
+                              Consolidated Ind AS
+                                                       Q4 FY25    Q3 FY26   Q4 FY26   Q4 FY25   Q3 FY26   Q4 FY26
+
+           Revenue                                                     64,479     67,087     70,698       100.0      100.0      100.0
+
+            Expenditure
+               a) Employee Costs                                             36,762     38,530     40,143        57.0       57.4       56.8
+                b) Cost of equipment and software licences                          2,748      1,262      1,444          4.3         1.9         2.0
+                c) Other Operating expenses                                      7,989      9,026      9,835        12.4       13.4       13.9
+                d) Depreciation                                                  1,379      1,380      1,406          2.1         2.1         2.0
+             Total Expenditure                                             48,878     50,198     52,828        75.8       74.8       74.7
+
+               Profit Before Taxes & Other Income                             15,601     16,889     17,870        24.2       25.2       25.3
+
+             Other income (expense), net                                     801       922       492          1.2         1.3         0.7
+               Profit Before Taxes                                            16,402     17,811     18,362        25.4       26.5       26.0
+
+              Provision For Taxes                                              4,109      4,310      4,578          6.3         6.4         6.5
+               Profit After Taxes & Before Non-controlling interests              12,293     13,501     13,784        19.1       20.1       19.5
+               Non-controlling interests                                         69        63        66          0.1         0.1         0.1
+
+            Net Profit                                                     12,224     13,438     13,718        19.0       20.0       19.4
+
+             Earnings per share in ₹                                           33.79      37.14      37.92
+
+             *Q3 FY26 excludes exceptional items
+
+
+
+
+
+                                                                                          29

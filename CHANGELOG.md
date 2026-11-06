@@ -3,6 +3,35 @@
 All notable changes to this project. Versions follow the release plan (V1 Foundation,
 V2 Intelligence, V3 Production and submission).
 
+## [2.0.0] - 2026-11-06 - V2 Intelligence
+
+### Added
+- **Rules-first financial extraction** (`factsheet_parser.py`): regex parsing of the consolidated
+  Ind AS income statement and the performance-highlights page, with 7 accounting-identity checks
+  per quarter; the LLM is used only as a fallback and its output is flagged unverified.
+- New metrics: employee cost %, other income, PBT, USD and constant-currency growth, order-book
+  TCV, headcount, attrition, cash conversion; employee-cost and headcount trends.
+- `eval/ground_truth.json` and `python -m eval.extraction` (33/33 values match).
+- **Speaker-aware transcript chunking**: turns tagged with speaker, role (management, analyst,
+  moderator), section (prepared remarks, Q&A) and page; Q&A answers carry their question.
+- **Hybrid retrieval**: BM25 + vector search fused with reciprocal rank fusion, per quarter,
+  with optional speaker-role filter.
+- **Grounding**: forward-looking statements and key quotes are verified against the transcripts
+  (unsupported ones are removed, quarter and speaker corrected); per-quarter metrics are attached
+  from the validated extractor instead of being written by the LLM; forecast period checked.
+- MySQL tables `tool_calls` (every tool call with input, duration, output size, error) and
+  `financial_metrics` (latest validated metrics per quarter).
+- `GET /metrics` endpoint; tool-call trace in `GET /forecast/{request_id}`; `grounding` block in responses.
+
+### Changed
+- PDF text extraction moved from pdfplumber to PyMuPDF (fixes phantom-space digits and rotated tables).
+- Agent writes `AgentForecast`; the API returns `ForecastResult` (agent output + validated metrics).
+- Master prompt: parallel gathering, at most one follow-up search, stricter grounding rules.
+
+### Fixed
+- Q4 FY26 figures misread by the V1 LLM extractor (revenue 70,694 → 70,698; net profit 13,702 → 13,718; EPS 37.96 → 37.92).
+- Analysts introduced as "question is from …" were tagged as management.
+
 ## [1.0.0] - 2026-11-06 - V1 Foundation
 
 ### Added

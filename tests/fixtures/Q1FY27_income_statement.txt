@@ -1,0 +1,39 @@
+Ind AS Income Statement - Consolidated
+
+
+
+
+                                                                               ₹ Crore               % of Revenue
+                               Consolidated Ind AS
+                                                         Q1 FY26     Q4 FY26    Q1 FY27   Q1 FY26   Q4 FY26   Q1 FY27
+
+            Revenue                                                     63,437        70,698     72,275       100.0      100.0      100.0
+
+              Expenditure
+                 a) Employee Costs                                             37,715        40,143     42,137        59.5       56.8       58.3
+                  b) Cost of equipment and software licences                         726         1,444      1,354          1.1         2.0         1.9
+                  c) Other Operating expenses                                      8,121         9,835     10,228        12.8       13.9       14.1
+                  d) Depreciation                                                  1,361         1,406      1,239          2.1         2.0         1.7
+               Total Expenditure                                             47,923        52,828     54,958        75.5       74.7       76.0
+
+                 Profit Before Taxes & Other Income                             15,514        17,870     17,317        24.5       25.3       24.0
+
+               Other income (expense), net                                       1,465         492      1,295          2.3         0.7         1.8
+                 Profit Before Taxes                                            16,979        18,362     18,612        26.8       26.0       25.8
+
+                Provision For Taxes                                              4,160         4,578      4,692          6.6         6.5         6.5
+                 Profit After Taxes & Before Non-controlling interests              12,819        13,784     13,920        20.2       19.5       19.3
+                 Non-controlling interests                                         59          66        71          0.1         0.1         0.1
+
+              Net Profit                                                     12,760        13,718     13,849        20.1       19.4       19.2
+
+               Earnings per share in ₹                                           35.27         37.92      38.28
+
+
+               *Q1 FY27 excludes exceptional items
+
+
+
+
+
+                                                                                          21

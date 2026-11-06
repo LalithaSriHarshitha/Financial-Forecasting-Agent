@@ -5,28 +5,55 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-class QuarterMetrics(BaseModel):
-    """Key consolidated metrics for one quarter, in INR crore unless stated."""
+class LLMQuarterRow(BaseModel):
+    """Fallback schema the LLM fills when rules-based parsing fails (INR crore)."""
 
     quarter: str = Field(description="Fiscal quarter label, e.g. 'Q2 FY27'.")
     revenue_cr: float | None = Field(None, description="Total revenue, INR crore.")
     operating_income_cr: float | None = Field(
         None, description="Operating income / profit before taxes and other income, INR crore."
     )
-    operating_margin_pct: float | None = Field(
-        None, description="Operating margin as % of revenue."
-    )
     net_profit_cr: float | None = Field(
         None, description="Net profit attributable to shareholders, INR crore."
     )
-    net_margin_pct: float | None = Field(None, description="Net profit as % of revenue.")
     eps_inr: float | None = Field(None, description="Earnings per share, INR.")
+
+
+class QuarterMetrics(BaseModel):
+    """All metrics for one quarter. Money in INR crore unless stated; ratios in %."""
+
+    quarter: str
+    # Income statement (Ind AS, consolidated)
+    revenue_cr: float | None = None
+    employee_cost_cr: float | None = None
+    employee_cost_pct: float | None = None
+    operating_income_cr: float | None = None
+    operating_margin_pct: float | None = None
+    other_income_cr: float | None = None
+    profit_before_tax_cr: float | None = None
+    net_profit_cr: float | None = None
+    net_margin_pct: float | None = None
+    eps_inr: float | None = None
+    # Operational signals (performance highlights page)
+    usd_revenue_mn: float | None = None
+    usd_growth_qoq_pct: float | None = None
+    usd_growth_yoy_pct: float | None = None
+    cc_growth_qoq_pct: float | None = None
+    cc_growth_yoy_pct: float | None = None
+    order_book_tcv_usd_bn: float | None = None
+    headcount: int | None = None
+    attrition_ltm_pct: float | None = None
+    cfo_to_net_profit_pct: float | None = None
+    # Provenance
+    source: str | None = None
+    extraction_method: str | None = None  # "rules" | "llm_fallback"
+    verified: bool = False  # all accounting checks passed
 
 
 class ExtractedStatement(BaseModel):
     """All quarter columns read from one income-statement table."""
 
-    quarters: list[QuarterMetrics] = Field(
+    quarters: list[LLMQuarterRow] = Field(
         description="One entry per quarter column found in the table."
     )
     notes: str | None = Field(

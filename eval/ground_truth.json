@@ -1,0 +1,26 @@
+{
+  "description": "Reference figures typed from the 'Ind AS Income Statement - Consolidated' and 'Performance Highlights' pages of the TCS Q4 FY26, Q1 FY27 and Q2 FY27 fact sheets (INR crore; EPS in INR). Used by `python -m eval.extraction` to measure extraction accuracy.",
+  "quarters": {
+    "Q4 FY26": {
+      "source": "Q4 FY26 fact sheet p.29 and p.4",
+      "revenue_cr": 70698, "operating_income_cr": 17870, "net_profit_cr": 13718, "eps_inr": 37.92,
+      "employee_cost_cr": 40143,
+      "usd_revenue_mn": 7621, "cc_growth_qoq_pct": 1.2, "cc_growth_yoy_pct": -0.6,
+      "order_book_tcv_usd_bn": 12.0, "headcount": 584519, "attrition_ltm_pct": 13.7
+    },
+    "Q1 FY27": {
+      "source": "Q1 FY27 fact sheet p.21 and p.4",
+      "revenue_cr": 72275, "operating_income_cr": 17317, "net_profit_cr": 13849, "eps_inr": 38.28,
+      "employee_cost_cr": 42137,
+      "usd_revenue_mn": 7624, "cc_growth_qoq_pct": 0.4, "cc_growth_yoy_pct": 3.2,
+      "order_book_tcv_usd_bn": 9.5, "headcount": 593798, "attrition_ltm_pct": 13.6
+    },
+    "Q2 FY27": {
+      "source": "Q2 FY27 fact sheet p.21 and p.4",
+      "revenue_cr": 73188, "operating_income_cr": 17553, "net_profit_cr": 13884, "eps_inr": 38.37,
+      "employee_cost_cr": 41890,
+      "usd_revenue_mn": 7642, "cc_growth_qoq_pct": 0.5, "cc_growth_yoy_pct": 2.8,
+      "order_book_tcv_usd_bn": 9.6, "headcount": 598056, "attrition_ltm_pct": 13.3
+    }
+  }
+}

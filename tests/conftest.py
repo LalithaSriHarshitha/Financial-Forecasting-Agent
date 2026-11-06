@@ -36,10 +36,10 @@ def sample_metrics():
              "eps_inr": 38.28},
             {"quarter": "Q2 FY27", "revenue_cr": 73188, "operating_income_cr": 17553,
              "operating_margin_pct": 23.98, "net_profit_cr": 13884, "net_margin_pct": 18.97,
-             "eps_inr": 38.37},
+             "eps_inr": 38.37, "verified": True, "source": "TCS Q2 FY27 Fact Sheet, page 21"},
         ],
         "trends": [{"quarter": "Q2 FY27", "revenue_growth_qoq_pct": 1.26}],
-        "sources": {"Q2 FY27": "TCS Q2 FY27 Fact Sheet, page 21"},
+        "validation": {"checks_passed": 42, "checks_total": 42, "methods": {}, "restatements": []},
         "errors": [],
     }
 

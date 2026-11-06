@@ -15,8 +15,9 @@ from sqlalchemy import text
 
 from app import __version__
 from app.agent.forecast_agent import run_forecast
+from app.agent.progress import ProgressLogger
 from app.config import get_settings
-from app.db.repository import get_request_log, log_request
+from app.db.repository import get_request_log, get_tool_calls, log_request, log_tool_calls
 from app.db.session import get_engine, init_db
 from app.ingestion.manifest import load_manifest
 from app.logging_config import setup_logging
@@ -85,11 +86,13 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
     request_id = str(uuid.uuid4())
     started = time.perf_counter()
     logger.info("Forecast request %s: %s", request_id, req.task[:120])
+    progress = ProgressLogger()
     try:
-        result, trace = run_forecast(req.task)
+        run = run_forecast(req.task, progress=progress)
     except Exception as exc:
         latency = int((time.perf_counter() - started) * 1000)
         logger.exception("Forecast request %s failed", request_id)
+        log_tool_calls(request_id, progress.tool_calls)
         log_request(
             request_id=request_id,
             endpoint="/forecast",
@@ -120,9 +123,11 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
         model=settings.chat_model_name,
         generated_at=datetime.now(timezone.utc),
         latency_ms=int((time.perf_counter() - started) * 1000),
-        tool_calls=trace,
-        result=result,
+        tool_calls=run.trace,
+        grounding=run.grounding,
+        result=run.result,
     )
+    log_tool_calls(request_id, run.tool_calls)
     log_request(
         request_id=request_id,
         endpoint="/forecast",
@@ -149,4 +154,17 @@ def get_logged_forecast(request_id: str) -> dict:
         "request": row.request_payload,
         "response": row.response_payload,
         "error": row.error_message,
+        "tool_calls": [
+            {"sequence": c.sequence, "tool": c.tool_name, "input": c.tool_input,
+             "duration_ms": c.duration_ms, "output_chars": c.output_chars, "error": c.error}
+            for c in get_tool_calls(request_id)
+        ],
     }
+
+
+@app.get("/metrics", tags=["data"])
+def financial_metrics(quarter: str | None = None) -> dict:
+    """Validated financial metrics extracted from the fact sheets (no LLM call)."""
+    from app.tools.financial_extractor import get_financial_metrics
+
+    return get_financial_metrics([quarter] if quarter else None)

@@ -168,7 +168,10 @@ pip install -r requirements.txt
 >
 > Type commands one per line, without trailing `# comments`; Command Prompt treats them as arguments.
 
-### Step 2: Create the MySQL database and user
+### Step 2: MySQL user (the database is created automatically)
+
+On startup the app runs `CREATE DATABASE IF NOT EXISTS`, so with `root` you can skip this step.
+To use a dedicated user instead (recommended), run:
 
 ```bash
 mysql -u root -p
@@ -230,6 +233,18 @@ This checks the Gemini key and model, the MySQL connection and tables, the docum
 ---
 
 ## 4. How to run
+
+### Quick end-to-end run (one command)
+
+```bash
+python -m app.demo
+```
+
+This creates the database if needed, sends the assignment's example task to the real
+`POST /forecast` endpoint, confirms the MySQL log row, prints a summary and saves the full JSON
+to `sample_output.json`.
+
+### Start the API service
 
 ```bash
 uvicorn app.main:app --reload

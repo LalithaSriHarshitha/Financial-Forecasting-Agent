@@ -1,0 +1,232 @@
+{
+  "generated_at": "2026-11-06T10:01:04+00:00",
+  "provider": "gemini",
+  "model": "gemini-3.6-flash",
+  "extraction": {
+    "matched": 33,
+    "total": 33,
+    "accuracy_pct": 100.0,
+    "mismatches": []
+  },
+  "retrieval": {
+    "k": 3,
+    "questions": 12,
+    "hit_rate_pct": {
+      "hybrid": 83.3,
+      "vector_only": 66.7,
+      "bm25_only": 50.0
+    },
+    "rows": [
+      {
+        "id": "acquisition_margin",
+        "quarter": "Q2 FY27",
+        "hybrid": true,
+        "vector_only": false,
+        "bm25_only": true
+      },
+      {
+        "id": "holiday_shutdowns",
+        "quarter": "Q2 FY27",
+        "hybrid": false,
+        "vector_only": false,
+        "bm25_only": false
+      },
+      {
+        "id": "telecom_rampdown",
+        "quarter": "Q2 FY27",
+        "hybrid": true,
+        "vector_only": true,
+        "bm25_only": false
+      },
+      {
+        "id": "contractor_costs",
+        "quarter": "Q2 FY27",
+        "hybrid": true,
+        "vector_only": true,
+        "bm25_only": false
+      },
+      {
+        "id": "ai_model_partners",
+        "quarter": "Q4 FY26",
+        "hybrid": false,
+        "vector_only": false,
+        "bm25_only": false
+      },
+      {
+        "id": "manufacturing_deal",
+        "quarter": "Q1 FY27",
+        "hybrid": true,
+        "vector_only": true,
+        "bm25_only": true
+      },
+      {
+        "id": "salary_headwind",
+        "quarter": "Q4 FY26",
+        "hybrid": true,
+        "vector_only": true,
+        "bm25_only": true
+      },
+      {
+        "id": "ai_revenue_size",
+        "quarter": null,
+        "hybrid": true,
+        "vector_only": true,
+        "bm25_only": false
+      },
+      {
+        "id": "datacenter_business",
+        "quarter": "Q2 FY27",
+        "hybrid": true,
+        "vector_only": true,
+        "bm25_only": true
+      },
+      {
+        "id": "campus_hiring",
+        "quarter": "Q2 FY27",
+        "hybrid": true,
+        "vector_only": true,
+        "bm25_only": false
+      },
+      {
+        "id": "order_book",
+        "quarter": "Q1 FY27",
+        "hybrid": true,
+        "vector_only": false,
+        "bm25_only": true
+      },
+      {
+        "id": "project_delays",
+        "quarter": null,
+        "hybrid": true,
+        "vector_only": true,
+        "bm25_only": true
+      }
+    ]
+  },
+  "faithfulness": {
+    "file": "sample_output.json",
+    "passed": 29,
+    "total": 29,
+    "score_pct": 100.0,
+    "failed": [],
+    "checks": [
+      {
+        "check": "Q4 FY26 revenue_cr matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q4 FY26 net_profit_cr matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q4 FY26 eps_inr matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q4 FY26 order_book_tcv_usd_bn matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q4 FY26 attrition_ltm_pct matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q1 FY27 revenue_cr matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q1 FY27 net_profit_cr matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q1 FY27 eps_inr matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q1 FY27 order_book_tcv_usd_bn matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q1 FY27 attrition_ltm_pct matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q2 FY27 revenue_cr matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q2 FY27 net_profit_cr matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q2 FY27 eps_inr matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q2 FY27 order_book_tcv_usd_bn matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "Q2 FY27 attrition_ltm_pct matches ground truth",
+        "passed": true
+      },
+      {
+        "check": "quote in transcripts: Sudheer, definitely, looking at all the parameters, I don't ...",
+        "passed": true
+      },
+      {
+        "check": "quote in transcripts: The acquisition-related dilution, particularly in MHP, is li...",
+        "passed": true
+      },
+      {
+        "check": "quote in transcripts: While it's an uphill task, we'll continue to endeavor to inc...",
+        "passed": true
+      },
+      {
+        "check": "quote in transcripts: By and large, most of the headwinds we know probably are beh...",
+        "passed": true
+      },
+      {
+        "check": "risk 'Q3 Seasonal Furloughs and Discretionary ' cites a source quarter",
+        "passed": true
+      },
+      {
+        "check": "risk 'MHP Acquisition Margin Dilution' cites a source quarter",
+        "passed": true
+      },
+      {
+        "check": "risk 'Subcontractor and Third-Party Cost Press' cites a source quarter",
+        "passed": true
+      },
+      {
+        "check": "risk 'Vertical-Specific Spending Sluggishness' cites a source quarter",
+        "passed": true
+      },
+      {
+        "check": "opportunitie 'Accelerating Enterprise AI & Agentic AI ' cites a source quarter",
+        "passed": true
+      },
+      {
+        "check": "opportunitie 'Strong Order Book & Net-New Transformati' cites a source quarter",
+        "passed": true
+      },
+      {
+        "check": "opportunitie 'Cloud Modernization and Core Tech Debt R' cites a source quarter",
+        "passed": true
+      },
+      {
+        "check": "opportunitie 'Energy, Resources & Utilities (ERU) Sect' cites a source quarter",
+        "passed": true
+      },
+      {
+        "check": "forecast period is the quarter after the latest analysed",
+        "passed": true
+      },
+      {
+        "check": "no investment advice (buy/sell/price target)",
+        "passed": true
+      }
+    ]
+  },
+  "consistency": null
+}

@@ -147,16 +147,26 @@ git clone https://github.com/LalithaSriHarshitha/Financial-Forecasting-Agent.git
 cd Financial-Forecasting-Agent
 
 python -m venv .venv
-# Windows (PowerShell):
-.venv\Scripts\Activate.ps1
-# macOS / Linux:
-source .venv/bin/activate
+```
 
+Activate the virtual environment. Use the line for your terminal:
+
+| Terminal | Command |
+|---|---|
+| Windows Command Prompt (`C:\...>`) | `.venv\Scripts\activate.bat` |
+| Windows PowerShell (`PS C:\...>`) | `.venv\Scripts\Activate.ps1` |
+| macOS / Linux | `source .venv/bin/activate` |
+
+Your prompt should now start with `(.venv)`. Then install:
+
+```bash
 pip install -r requirements.txt
 ```
 
 > If PowerShell blocks the activate script, run once:
 > `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+>
+> Type commands one per line, without trailing `# comments`; Command Prompt treats them as arguments.
 
 ### Step 2: Create the MySQL database and user
 
@@ -201,8 +211,9 @@ python -m app.ingestion
 ```
 
 This downloads the six PDFs in `data/manifest.json` into `data/raw/` and indexes the
-transcripts into `data/chroma/`. If a site blocks a download, the log prints the URL. Open it
-in your browser, save the PDF into `data/raw/` with the file name shown, and run:
+transcripts into `data/chroma/`. tcs.com sometimes blocks scripted downloads (HTTP 403). If it
+does, the log prints the URL: open it in your browser, save the PDF into `data/raw/` with the
+file name shown, and run:
 
 ```bash
 python -m app.ingestion --skip-download

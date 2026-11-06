@@ -313,7 +313,7 @@ tests/                     pytest suite
 | `Can't connect to MySQL server` | Start the service (`net start MySQL80` in an admin PowerShell) and check the `MYSQL_*` values |
 | `cryptography package is required` | `pip install cryptography` (already in requirements) |
 | `model ... not found` | Run `python -m app.check` and set `GEMINI_MODEL` to a listed model |
-| `429` / quota errors from Gemini | Free-tier rate limit; wait a minute and retry |
+| `429` / quota errors from Gemini | The app already paces itself (`LLM_REQUESTS_PER_MINUTE`, `EMBED_REQUESTS_PER_MINUTE` in `.env`) and retries. If you still hit limits, lower those values; a daily quota resets the next day |
 | `No transcript excerpts found` | Run `python -m app.ingestion` |
 | Download blocked (`response is not a PDF`) | Save the PDF manually into `data/raw/` (see Step 4) |
 

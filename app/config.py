@@ -22,6 +22,9 @@ class Settings(BaseSettings):
         default="models/gemini-embedding-001", alias="GEMINI_EMBEDDING_MODEL"
     )
     llm_temperature: float = Field(default=0.2, alias="LLM_TEMPERATURE")
+    # Free-tier friendly limits; raise them if your key is on a paid tier.
+    llm_requests_per_minute: int = Field(default=8, alias="LLM_REQUESTS_PER_MINUTE")
+    embed_requests_per_minute: int = Field(default=90, alias="EMBED_REQUESTS_PER_MINUTE")
 
     # MySQL
     mysql_host: str = Field(default="localhost", alias="MYSQL_HOST")

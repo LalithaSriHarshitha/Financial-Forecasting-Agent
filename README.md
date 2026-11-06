@@ -405,6 +405,9 @@ The first command writes [`eval/report.md`](eval/report.md). It covers extractio
 vs BM25-only, embeddings only), and faithfulness checks on `sample_output.json` (metrics, quotes,
 sources, forecast period, no investment advice).
 
+Latest results: extraction **33/33**; retrieval hit@3 **hybrid 83.3%** (vector-only 66.7%,
+BM25-only 50.0%); faithfulness **29/29**.
+
 The second also runs the agent 3 times and measures agreement of the forecast directions. It uses
 about 15 LLM requests. `python -m eval.extraction` prints the per-field extraction report alone.
 

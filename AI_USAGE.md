@@ -47,7 +47,7 @@ Division of labour:
 | MarketDataTool | None | yfinance quote; P/E from validated trailing EPS; 5-minute cache |
 | Agent | 3–4 LLM calls: plan and gather → (optional follow-up) → final structured answer | Attaches metrics and market snapshot, checks quotes, checks forecast period, logs everything |
 
-A forecast uses about **4–5 chat requests** and 1–2 embedding requests. It takes about 100 s on Gemini's free tier.
+A forecast uses about **4–5 chat requests** and 1–2 embedding requests. The live V3 run took **77 s**: 5 LLM calls, 26.7k input and 11.3k output tokens.
 
 ---
 
@@ -68,19 +68,21 @@ A forecast uses about **4–5 chat requests** and 1–2 embedding requests. It t
 - 277 speaker-aware chunks from 229 speaker turns.
 - Exactly the five TCS executives are tagged as management in all three calls; analysts are tagged from the moderator's introductions.
 
-**Synthesis quality** (live V2 run, `sample_output.json`):
-- **Forecast:** Q3 FY27.
-- **Judgement:** cautiously optimistic sentiment; revenue steady; slight margin compression.
+**Synthesis quality** (live V3 run, `sample_output.json`):
+- **Forecast:** Q3 FY27. Revenue **flat**, margin **contraction**, confidence medium; cautiously optimistic sentiment.
 - **Drivers identified:**
-  - Q3 seasonal furloughs;
+  - year-end seasonal furloughs;
   - roughly 50 bps of dilution from the MHP acquisition;
-  - AI revenue now above 10% of the total;
-  - TCV of $9.6 bn.
+  - $9.6 bn Q2 TCV;
+  - $3.1 bn annualized AI revenue.
+  Margin is expected to recover in Q4 FY27.
+- **Market context:** price ₹2,498.50, 25.4% below the 52-week high, trailing P/E 16.5 on validated EPS.
 - **Grounding:**
-  - 6/6 quotes verified against the transcripts;
+  - 4/4 quotes verified against the transcripts;
+  - 63/63 accounting checks passed;
   - every risk and opportunity cites its quarter and speaker.
-- **Reasoning:** the agent made one extra search on its own, limited to management in Q2 FY27, on furloughs and MHP.
-- **Faithfulness:** 31/31 checks passed (`eval/report.md`).
+- **Reasoning:** all three tools ran in parallel, then the agent made one extra search on its own, limited to management in Q2 FY27, on furloughs, MHP and the Q3 outlook.
+- **Faithfulness:** 29/29 checks passed (`eval/report.md`).
 
 ---
 
@@ -117,8 +119,8 @@ A forecast uses about **4–5 chat requests** and 1–2 embedding requests. It t
 | Evaluation | Method | Result |
 |---|---|---|
 | Extraction accuracy | 33 ground-truth values typed from the fact sheets | 33/33 = 100% |
-| Retrieval quality | Hit@3 on 12 paraphrased questions (no key terms), hybrid vs vector-only vs BM25-only | see `eval/report.md` |
-| Output faithfulness | 31 deterministic checks on the saved forecast (metrics, quotes, sources, period, no advice) | 31/31 |
+| Retrieval quality | Hit@3 on 12 paraphrased questions (no key terms) | **Hybrid 83.3%**, vector-only 66.7%, BM25-only 50.0% |
+| Output faithfulness | Deterministic checks on the saved forecast (metrics, quotes, sources, period, no advice) | 29/29 |
 | Consistency | Agreement of `revenue_direction`, `margin_direction` and `confidence` over N full runs (`--consistency 3`) | see `eval/report.md` (costs about 15 requests) |
 | Unit and integration tests | 35 pytest tests: real fact-sheet text, the agent graph with a scripted LLM, API, timeouts, quotas, concurrency | all pass |
 

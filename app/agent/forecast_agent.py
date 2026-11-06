@@ -6,6 +6,7 @@ from functools import lru_cache
 from langchain.agents import create_agent
 from langchain.agents.structured_output import ToolStrategy
 
+from app.agent.progress import ProgressLogger
 from app.agent.prompts import MASTER_PROMPT
 from app.llm import get_chat_model
 from app.schemas.forecast import ForecastResult
@@ -34,7 +35,7 @@ def run_forecast(task: str) -> tuple[ForecastResult, list[str]]:
     agent = build_agent()
     state = agent.invoke(
         {"messages": [{"role": "user", "content": task}]},
-        config={"recursion_limit": RECURSION_LIMIT},
+        config={"recursion_limit": RECURSION_LIMIT, "callbacks": [ProgressLogger()]},
     )
     trace = [
         f"{call['name']}({call.get('args', {})})"

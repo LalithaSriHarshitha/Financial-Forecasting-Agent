@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     ollama_tool_model: str | None = Field(default=None, alias="OLLAMA_TOOL_MODEL")
     ollama_embedding_model: str = Field(default="nomic-embed-text", alias="OLLAMA_EMBEDDING_MODEL")
     ollama_num_ctx: int = Field(default=16384, alias="OLLAMA_NUM_CTX")
+    ollama_num_predict: int = Field(default=3072, alias="OLLAMA_NUM_PREDICT")
+    ollama_timeout_s: float = Field(default=900, alias="OLLAMA_TIMEOUT_S")
 
     # RAG
     rag_chunks_per_quarter: int = Field(default=2, alias="RAG_CHUNKS_PER_QUARTER")

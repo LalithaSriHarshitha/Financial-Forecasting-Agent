@@ -39,8 +39,10 @@ def get_chat_model(temperature: float | None = None, for_tools: bool = False) ->
             base_url=s.ollama_base_url,
             temperature=temp,
             num_ctx=s.ollama_num_ctx,
+            num_predict=s.ollama_num_predict,  # cap output so a runaway generation cannot loop forever
             reasoning=False,  # skip "thinking" output: faster, and keeps JSON clean
             keep_alive="10m",
+            client_kwargs={"timeout": s.ollama_timeout_s},
         )
 
     from langchain_google_genai import ChatGoogleGenerativeAI

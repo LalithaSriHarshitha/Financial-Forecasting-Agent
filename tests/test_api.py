@@ -80,3 +80,9 @@ def test_root_redirects_to_docs():
     with TestClient(main.app) as client:
         resp = client.get("/", follow_redirects=False)
     assert resp.status_code == 307 and resp.headers["location"] == "/docs"
+
+
+def test_json_responses_declare_utf8():
+    with TestClient(main.app) as client:
+        resp = client.get("/health")
+    assert resp.headers["content-type"] == "application/json; charset=utf-8"

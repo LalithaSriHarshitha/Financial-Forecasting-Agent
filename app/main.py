@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import text
 
 from app import __version__
@@ -46,7 +46,14 @@ async def lifespan(_: FastAPI):
     yield
 
 
+class UTF8JSONResponse(JSONResponse):
+    """Declare the charset so clients such as Windows PowerShell decode the rupee sign (₹) correctly."""
+
+    media_type = "application/json; charset=utf-8"
+
+
 app = FastAPI(
+    default_response_class=UTF8JSONResponse,
     title="TCS Financial Forecasting Agent",
     version=__version__,
     description="An AI agent that reads TCS financial reports and earnings-call transcripts "

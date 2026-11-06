@@ -96,7 +96,7 @@ def extract_from_document(doc: DocumentEntry, use_cache: bool = True) -> dict:
             return cached
 
     page_no, page_text = locate_income_statement(read_pages(doc.path))
-    llm = get_chat_model(temperature=0).with_structured_output(ExtractedStatement)
+    llm = get_chat_model(temperature=0, for_tools=True).with_structured_output(ExtractedStatement)
     statement: ExtractedStatement = llm.invoke(
         EXTRACTION_PROMPT.format(title=doc.title, page=page_text)
     )

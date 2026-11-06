@@ -18,12 +18,14 @@ Step 1 - Numbers. Call financial_data_extractor once (no arguments) to get every
          Identify the latest quarter and the quarters you will analyse (up to the last three).
 Step 2 - Trends. From the numbers, determine the direction of revenue growth, operating
          margin and net profit. Note anything unusual (one-off items, margin swings).
-Step 3 - Narrative. Call qualitative_analysis several times with focused queries, at least:
+Step 3 - Narrative. Call qualitative_analysis ONCE with all of these queries in the list:
          a) "demand environment, deal wins and pipeline outlook"
          b) "operating margin drivers, headwinds and wage hikes"
          c) "AI, cloud and new growth opportunities"
          d) "risks, uncertainties and client spending caution"
-         Add a quarter filter when you need to compare how the tone changed between calls.
+         It retrieves excerpts from every quarter's call, so you can compare the tone across
+         calls. Make a second call only if something important is still missing.
+         You may call financial_data_extractor and qualitative_analysis in the same turn.
 Step 4 - Cross-check. Compare what management says with what the numbers show. Call out
          where they agree and where they diverge.
 Step 5 - Forecast. Combine the evidence into a qualitative outlook for the next quarter:

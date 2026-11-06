@@ -44,3 +44,14 @@ def test_forecast_error_is_logged(monkeypatch):
 def test_rejects_too_short_task():
     with TestClient(main.app) as client:
         assert client.post("/forecast", json={"task": "hi"}).status_code == 422
+
+
+def test_quota_errors_map_to_429(monkeypatch):
+    def quota(task):
+        raise RuntimeError("429 RESOURCE_EXHAUSTED: requests per day limit exceeded")
+
+    monkeypatch.setattr(main, "run_forecast", quota)
+    with TestClient(main.app) as client:
+        resp = client.post("/forecast", json={})
+    assert resp.status_code == 429
+    assert "quota" in resp.json()["detail"]["error"]

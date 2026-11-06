@@ -27,12 +27,12 @@ def test_agent_chains_tools_into_structured_forecast(monkeypatch, sample_metrics
     monkeypatch.setattr(financial_extractor, "get_financial_metrics", lambda quarters=None: sample_metrics)
     monkeypatch.setattr(
         qualitative_analysis, "analyze",
-        lambda query, quarter=None: {"query": query, "insights": {"sentiment": "cautiously_optimistic"}},
+        lambda queries, quarter=None: {"queries": queries, "insights": {"sentiment": "cautiously_optimistic"}},
     )
     script = [
         AIMessage(content="", tool_calls=[{"name": "financial_data_extractor", "args": {}, "id": "c1"}]),
         AIMessage(content="", tool_calls=[{"name": "qualitative_analysis",
-                                           "args": {"query": "demand outlook"}, "id": "c2"}]),
+                                           "args": {"queries": ["demand outlook", "risks"]}, "id": "c2"}]),
         AIMessage(content="", tool_calls=[{"name": "ForecastResult",
                                            "args": json.loads(sample_result.model_dump_json()), "id": "c3"}]),
     ]

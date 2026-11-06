@@ -85,8 +85,8 @@ Q2 FY27 = Jul–Sep 2026. The forecast target is **Q3 FY27 (Oct–Dec 2026)**.
 | Step | How |
 |---|---|
 | Index (offline) | Transcripts split into ~1,500-character chunks (200 overlap), tagged with quarter and page, embedded with `gemini-embedding-001`, stored in Chroma |
-| Retrieve | Top 8 chunks by semantic similarity, optionally filtered to one quarter |
-| Analyse | Gemini reads **only** the retrieved excerpts and fills `QualitativeInsights`: themes (with quarters), sentiment + rationale, forward-looking statements, risks, opportunities |
+| Retrieve | The agent passes all its topics in one call. Each query is embedded once, and the top 3 chunks **per quarter** are retrieved, so every call is represented. Results are de-duplicated and ordered by quarter |
+| Analyse | Gemini reads **only** the retrieved excerpts in one call and fills `QualitativeInsights`: themes (with quarters), sentiment and how it changed, forward-looking statements, risks, opportunities |
 | Output | JSON with the insights plus the evidence excerpts (quarter, page) |
 
 ### The agent (`app/agent/`)
@@ -328,7 +328,8 @@ tests/                     pytest suite
 | `Can't connect to MySQL server` | Start the service (`net start MySQL80` in an admin PowerShell) and check the `MYSQL_*` values |
 | `cryptography package is required` | `pip install cryptography` (already in requirements) |
 | `model ... not found` | Run `python -m app.check` and set `GEMINI_MODEL` to a listed model |
-| `429` / quota errors from Gemini | The app already paces itself (`LLM_REQUESTS_PER_MINUTE`, `EMBED_REQUESTS_PER_MINUTE` in `.env`) and retries. If you still hit limits, lower those values; a daily quota resets the next day |
+| `429` quota errors (per minute) | The app already paces itself (`LLM_REQUESTS_PER_MINUTE`, `EMBED_REQUESTS_PER_MINUTE` in `.env`) and retries. If you still hit limits, lower those values; a daily quota resets the next day |
+| `429` with "quota exhausted" (per day) | Free-tier keys allow a limited number of requests per model per day (it can be as low as 20); quotas reset at midnight Pacific time. A forecast uses about 4–5 requests. Set `GEMINI_TOOL_MODEL` to a second model (e.g. a flash-lite model) to spread the load, or enable billing |
 | `No transcript excerpts found` | Run `python -m app.ingestion` |
 | Download blocked (`response is not a PDF`) | Save the PDF manually into `data/raw/` (see Step 4) |
 

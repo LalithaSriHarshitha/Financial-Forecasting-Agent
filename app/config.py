@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     # Gemini
     google_api_key: str = Field(default="", alias="GOOGLE_API_KEY")
     gemini_model: str = Field(default="gemini-3.6-flash", alias="GEMINI_MODEL")
+    # Optional cheaper/higher-quota model for the tools' internal LLM calls (defaults to GEMINI_MODEL).
+    gemini_tool_model: str | None = Field(default=None, alias="GEMINI_TOOL_MODEL")
     gemini_embedding_model: str = Field(
         default="models/gemini-embedding-001", alias="GEMINI_EMBEDDING_MODEL"
     )

@@ -20,12 +20,13 @@ def _rate_limiter() -> InMemoryRateLimiter:
     return InMemoryRateLimiter(requests_per_second=rpm / 60, check_every_n_seconds=0.2, max_bucket_size=2)
 
 
-def get_chat_model(temperature: float | None = None) -> ChatGoogleGenerativeAI:
+def get_chat_model(temperature: float | None = None, for_tools: bool = False) -> ChatGoogleGenerativeAI:
+    """Chat model for the agent, or (for_tools=True) for the tools' internal calls."""
     s = get_settings()
     if not s.google_api_key:
         raise RuntimeError("GOOGLE_API_KEY is not set. Add it to your .env file.")
     return ChatGoogleGenerativeAI(
-        model=s.gemini_model,
+        model=(s.gemini_tool_model or s.gemini_model) if for_tools else s.gemini_model,
         google_api_key=s.google_api_key,
         temperature=s.llm_temperature if temperature is None else temperature,
         rate_limiter=_rate_limiter(),

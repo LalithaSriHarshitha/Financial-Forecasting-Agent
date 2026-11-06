@@ -47,6 +47,11 @@ app = FastAPI(
 )
 
 
+def _is_quota_error(exc: BaseException) -> bool:
+    text_ = f"{type(exc).__name__} {exc}"
+    return "RESOURCE_EXHAUSTED" in text_ or "RateLimit" in text_
+
+
 @app.get("/health", tags=["system"])
 def health() -> dict:
     settings = get_settings()
@@ -92,6 +97,16 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
             model=settings.gemini_model,
             latency_ms=latency,
         )
+        if _is_quota_error(exc):
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "request_id": request_id,
+                    "error": "Gemini API quota exhausted. Wait for the quota to reset, set a model "
+                    "with a higher quota in GEMINI_MODEL / GEMINI_TOOL_MODEL, or enable billing.",
+                    "provider_message": str(exc)[:500],
+                },
+            ) from exc
         raise HTTPException(
             status_code=500,
             detail={"request_id": request_id, "error": f"{type(exc).__name__}: {exc}"},

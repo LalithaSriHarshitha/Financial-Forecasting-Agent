@@ -131,7 +131,16 @@ def health() -> dict:
     }
 
 
-@app.post("/forecast", response_model=ForecastResponse, tags=["forecast"], dependencies=[Depends(limit_forecasts)])
+ERROR_RESPONSES = {
+    401: {"description": "Missing or invalid `X-API-Key` header (when the server sets API_KEYS)."},
+    429: {"description": "Rate limit reached (forecasts per hour) or the LLM provider's quota is exhausted."},
+    500: {"description": "Unexpected failure; the error and `request_id` are logged in MySQL."},
+    504: {"description": "The forecast exceeded FORECAST_TIMEOUT_S."},
+}
+
+
+@app.post("/forecast", response_model=ForecastResponse, tags=["forecast"],
+          dependencies=[Depends(limit_forecasts)], responses=ERROR_RESPONSES)
 def forecast(req: ForecastRequest) -> ForecastResponse:
     """Run the agent on an analytical task and return a structured forecast.
 
@@ -206,7 +215,8 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
     return response
 
 
-@app.get("/forecast/{request_id}", tags=["forecast"], dependencies=[Depends(require_api_key)])
+@app.get("/forecast/{request_id}", tags=["forecast"], dependencies=[Depends(require_api_key)],
+         responses={401: ERROR_RESPONSES[401], 404: {"description": "Unknown request_id."}})
 def get_logged_forecast(request_id: str) -> dict:
     """Fetch a previously logged request and its response from MySQL."""
     row = get_request_log(request_id)

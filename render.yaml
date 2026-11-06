@@ -1,0 +1,45 @@
+# Render Blueprint: New > Blueprint > select this repository.
+# Values marked `sync: false` are entered in the Render dashboard (never committed).
+services:
+  - type: web
+    name: tcs-forecasting-agent
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash
+      - key: GEMINI_EMBEDDING_MODEL
+        value: models/gemini-embedding-001
+      - key: GOOGLE_API_KEY
+        sync: false
+      # Hosted MySQL 8 (e.g. Aiven free plan): host, port, user, password from its console
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        sync: false
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_DATABASE
+        value: tcs_forecast
+      - key: MYSQL_SSL
+        value: "true"
+      - key: MYSQL_SSL_CA_CERT
+        sync: false
+      # Comma-separated keys callers must send in the X-API-Key header
+      - key: API_KEYS
+        sync: false
+      - key: FORECAST_RATE_LIMIT_PER_HOUR
+        value: "10"
+      - key: FORECAST_TIMEOUT_S
+        value: "600"
+      - key: MARKET_DATA_ENABLED
+        value: "true"
+      - key: LOG_LEVEL
+        value: INFO

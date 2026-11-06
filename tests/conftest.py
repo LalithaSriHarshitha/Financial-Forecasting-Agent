@@ -12,6 +12,9 @@ os.environ["DATABASE_URL"] = f"sqlite:///{ROOT / 'tests' / '.test.db'}"
 os.environ.setdefault("GOOGLE_API_KEY", "test-key")
 os.environ["MARKET_DATA_ENABLED"] = "false"  # no network in tests; market tests mock the quote
 os.environ["LLM_PROVIDER"] = "gemini"
+os.environ["FORECAST_RATE_LIMIT_PER_HOUR"] = "0"  # tests call /forecast many times
+os.environ["API_KEYS"] = ""
+os.environ["INDEX_AUTOBUILD"] = "false"
 
 
 @pytest.fixture(scope="session", autouse=True)

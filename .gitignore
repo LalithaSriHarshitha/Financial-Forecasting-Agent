@@ -11,8 +11,11 @@ venv/
 # Downloaded documents and generated data
 data/raw/*
 !data/raw/.gitkeep
+!data/raw/*.pdf
 data/processed/
-data/chroma/
+# Vector indexes are local, except the Gemini one, which is committed for deployment
+data/chroma/*
+!data/chroma/gemini_models_gemini-embedding-001_v2/
 
 # Editors / OS
 .vscode/

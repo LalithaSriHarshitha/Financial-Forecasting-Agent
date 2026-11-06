@@ -11,6 +11,9 @@ final JSON are logged to **MySQL 8.0**.
 > hybrid RAG, grounding checks on every quote, an evaluation suite, request timeouts and token
 > tracking. Release history: [CHANGELOG.md](CHANGELOG.md). AI stack and approach: [AI_USAGE.md](AI_USAGE.md).
 
+**Deploy:** a free public deployment on Render (Docker + hosted MySQL) is described in
+[DEPLOY.md](DEPLOY.md). The public API is protected by `X-API-Key` and a per-client rate limit.
+
 **Quick start** (after the setup in section 3):
 `python -m app.check` → `python -m app.ingestion` → `python -m app.demo`, or `uvicorn app.main:app`.
 
@@ -301,6 +304,8 @@ Edit `.env`:
 | `OLLAMA_MODEL` / `OLLAMA_EMBEDDING_MODEL` | only for Ollama: `qwen3:8b` / `nomic-embed-text` |
 | `MARKET_DATA_ENABLED` / `MARKET_SYMBOL` | `true` / `TCS.NS` (MarketDataTool; no key needed) |
 | `FORECAST_TIMEOUT_S` | maximum seconds per forecast request (default `600`, returns HTTP 504) |
+| `API_KEYS` / `FORECAST_RATE_LIMIT_PER_HOUR` | empty / `10`: set keys when the API is public; callers send `X-API-Key` |
+| `MYSQL_SSL` / `MYSQL_SSL_CA_CERT` | `false` locally; `true` (+ CA PEM) for hosted MySQL such as Aiven |
 | `MYSQL_HOST` / `MYSQL_PORT` | `localhost` / `3306` |
 | `MYSQL_USER` / `MYSQL_PASSWORD` | the user from Step 2 |
 | `MYSQL_DATABASE` | `tcs_forecast` |

@@ -86,3 +86,29 @@ def test_json_responses_declare_utf8():
     with TestClient(main.app) as client:
         resp = client.get("/health")
     assert resp.headers["content-type"] == "application/json; charset=utf-8"
+
+
+def test_api_key_required_when_configured(monkeypatch, sample_result):
+    from app.agent.forecast_agent import ForecastRun
+
+    monkeypatch.setattr(main.get_settings(), "api_keys", "secret-1, secret-2")
+    monkeypatch.setattr(main, "run_forecast", lambda task, progress=None: ForecastRun(result=sample_result))
+    with TestClient(main.app) as client:
+        assert client.post("/forecast", json={}).status_code == 401
+        assert client.post("/forecast", json={}, headers={"X-API-Key": "wrong"}).status_code == 401
+        assert client.post("/forecast", json={}, headers={"X-API-Key": "secret-2"}).status_code == 200
+        assert client.get("/forecast/abc").status_code == 401
+        assert client.get("/health").status_code == 200  # open endpoints stay open
+
+
+def test_forecast_rate_limit(monkeypatch, sample_result):
+    from app.agent.forecast_agent import ForecastRun
+    from app.security import forecast_limiter
+
+    forecast_limiter.reset()
+    monkeypatch.setattr(main.get_settings(), "forecast_rate_limit_per_hour", 2)
+    monkeypatch.setattr(main, "run_forecast", lambda task, progress=None: ForecastRun(result=sample_result))
+    with TestClient(main.app) as client:
+        codes = [client.post("/forecast", json={}).status_code for _ in range(3)]
+    forecast_limiter.reset()
+    assert codes == [200, 200, 429]

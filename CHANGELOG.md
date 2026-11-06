@@ -3,6 +3,17 @@
 All notable changes to this project. Versions follow the release plan (V1 Foundation,
 V2 Intelligence, V3 Production and submission).
 
+## [3.1.0] - 2026-11-06 - Deployment
+
+### Added
+- Render deployment: `Dockerfile`, `.dockerignore`, `render.yaml` blueprint, `DEPLOY.md` guide.
+- Access control: `X-API-Key` (`API_KEYS`) on `POST /forecast` and `GET /forecast/{id}`;
+  per-client rate limit (`FORECAST_RATE_LIMIT_PER_HOUR`, HTTP 429 with `Retry-After`).
+- TLS for hosted MySQL (`MYSQL_SSL`, `MYSQL_SSL_CA_CERT`).
+- Background index build at startup when no index is present (`INDEX_AUTOBUILD`).
+- Source PDFs committed (`data/raw/`) because tcs.com blocks server downloads.
+- `/` redirects to `/docs`; JSON responses declare `charset=utf-8`.
+
 ## [3.0.0] - 2026-11-06 - V3 Production and submission
 
 ### Added

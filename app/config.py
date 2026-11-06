@@ -34,8 +34,15 @@ class Settings(BaseSettings):
     market_data_enabled: bool = Field(default=True, alias="MARKET_DATA_ENABLED")
     market_symbol: str = Field(default="TCS.NS", alias="MARKET_SYMBOL")
 
-    # Service limits
+    # Service limits and access control
     forecast_timeout_s: float = Field(default=600, alias="FORECAST_TIMEOUT_S")
+    # Comma-separated keys accepted in the X-API-Key header. Empty = no key required (local use).
+    api_keys: str = Field(default="", alias="API_KEYS")
+    # Max POST /forecast calls per client per hour (protects the LLM quota). 0 = unlimited.
+    forecast_rate_limit_per_hour: int = Field(default=10, alias="FORECAST_RATE_LIMIT_PER_HOUR")
+
+    # Build the transcript index in the background at startup if it is missing
+    index_autobuild: bool = Field(default=True, alias="INDEX_AUTOBUILD")
 
     # RAG
     rag_chunks_per_quarter: int = Field(default=2, alias="RAG_CHUNKS_PER_QUARTER")
@@ -59,6 +66,10 @@ class Settings(BaseSettings):
     mysql_user: str = Field(default="forecast_user", alias="MYSQL_USER")
     mysql_password: str = Field(default="", alias="MYSQL_PASSWORD")
     mysql_database: str = Field(default="tcs_forecast", alias="MYSQL_DATABASE")
+    # TLS for hosted MySQL (e.g. Aiven): MYSQL_SSL=true requires an encrypted connection;
+    # MYSQL_SSL_CA_CERT (the CA certificate's PEM text) additionally verifies the server.
+    mysql_ssl: bool = Field(default=False, alias="MYSQL_SSL")
+    mysql_ssl_ca_cert: str | None = Field(default=None, alias="MYSQL_SSL_CA_CERT")
     # Optional full SQLAlchemy URL; overrides the MYSQL_* values (used by tests).
     database_url_override: str | None = Field(default=None, alias="DATABASE_URL")
 
@@ -82,6 +93,10 @@ class Settings(BaseSettings):
             database=self.mysql_database,
             query={"charset": "utf8mb4"},
         )
+
+    @property
+    def api_key_set(self) -> set[str]:
+        return {k.strip() for k in self.api_keys.split(",") if k.strip()}
 
     def _abs(self, p: Path) -> Path:
         return p if p.is_absolute() else PROJECT_ROOT / p

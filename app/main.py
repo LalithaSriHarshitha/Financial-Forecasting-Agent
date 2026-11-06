@@ -5,6 +5,7 @@ Docs at:   http://127.0.0.1:8000/docs
 """
 
 import logging
+import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -12,7 +13,7 @@ from concurrent.futures import TimeoutError as FutureTimeout
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import text
 
@@ -25,8 +26,39 @@ from app.db.session import get_engine, init_db
 from app.ingestion.manifest import load_manifest
 from app.logging_config import setup_logging
 from app.schemas.forecast import ForecastRequest, ForecastResponse
+from app.security import limit_forecasts, require_api_key
 
 logger = logging.getLogger("api")
+
+
+_index_state = {"status": "unknown"}
+
+
+def _ensure_index_in_background() -> None:
+    """Fresh deployments without a committed index build it once in the background."""
+    if get_settings().chroma_path.exists():
+        _index_state["status"] = "ready"
+        return
+    if not get_settings().index_autobuild:
+        _index_state["status"] = "missing (run python -m app.ingestion)"
+        return
+    if not any(d.exists for d in load_manifest() if d.type == "earnings_call_transcript"):
+        _index_state["status"] = "missing (no transcripts in data/raw)"
+        return
+
+    def build() -> None:
+        from app.ingestion.index import build_index
+
+        _index_state["status"] = "building"
+        try:
+            n = build_index()
+            _index_state["status"] = "ready"
+            logger.info("Background index build finished: %d chunks", n)
+        except Exception as exc:
+            _index_state["status"] = f"error: {exc}"
+            logger.exception("Background index build failed")
+
+    threading.Thread(target=build, name="index-build", daemon=True).start()
 
 
 # Agent runs execute here so a request can be timed out (FORECAST_TIMEOUT_S).
@@ -42,6 +74,7 @@ async def lifespan(_: FastAPI):
     except Exception as exc:
         logger.error("Cannot connect to the database. Check the MYSQL_* values in .env (%s)", exc)
         raise
+    _ensure_index_in_background()
     logger.info("TCS Forecasting Agent v%s ready (model: %s)", __version__, settings.chat_model_name)
     yield
 
@@ -92,11 +125,13 @@ def health() -> dict:
         "database": "connected" if db_ok else "unreachable",
         "documents_available": sum(d.exists for d in docs),
         "documents_expected": len(docs),
-        "vector_index_built": settings.chroma_path.exists(),
+        "vector_index_built": settings.chroma_path.exists() and _index_state["status"] != "building",
+        "vector_index_status": _index_state["status"],
+        "api_key_required": bool(settings.api_key_set),
     }
 
 
-@app.post("/forecast", response_model=ForecastResponse, tags=["forecast"])
+@app.post("/forecast", response_model=ForecastResponse, tags=["forecast"], dependencies=[Depends(limit_forecasts)])
 def forecast(req: ForecastRequest) -> ForecastResponse:
     """Run the agent on an analytical task and return a structured forecast.
 
@@ -171,7 +206,7 @@ def forecast(req: ForecastRequest) -> ForecastResponse:
     return response
 
 
-@app.get("/forecast/{request_id}", tags=["forecast"])
+@app.get("/forecast/{request_id}", tags=["forecast"], dependencies=[Depends(require_api_key)])
 def get_logged_forecast(request_id: str) -> dict:
     """Fetch a previously logged request and its response from MySQL."""
     row = get_request_log(request_id)

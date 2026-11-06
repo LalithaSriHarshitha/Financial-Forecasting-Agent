@@ -11,12 +11,12 @@ V2 Intelligence, V3 Production and submission).
 - Free-tier protections for Gemini: request pacing, 429 retries, quota errors returned as HTTP 429.
 - `python -m app.demo` one-command end-to-end run; database auto-created on startup.
 - FastAPI service with `GET /health`, `POST /forecast` and `GET /forecast/{request_id}`.
-- LangChain v1 tool-calling agent on Google Gemini with a step-by-step master prompt and
+- LangChain v1 tool-calling agent with a step-by-step master prompt and
   `ToolStrategy` structured output (`ForecastResult` Pydantic schema).
 - **FinancialDataExtractorTool**: locates the consolidated income statement in TCS fact
-  sheets, extracts per-quarter metrics with Gemini, recomputes margins, merges documents
+  sheets, extracts per-quarter metrics with the LLM, recomputes margins, merges documents
   (newest wins), computes QoQ/YoY trends, and caches results.
-- **QualitativeAnalysisTool**: Chroma + Gemini embeddings over earnings-call transcripts;
+- **QualitativeAnalysisTool**: Chroma vector search over earnings-call transcripts;
   returns themes, sentiment, forward-looking statements, risks and opportunities with evidence.
 - Ingestion CLI (`python -m app.ingestion`) that downloads the documents in `data/manifest.json`
   and builds the vector index.

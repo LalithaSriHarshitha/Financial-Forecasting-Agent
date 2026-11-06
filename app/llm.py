@@ -1,11 +1,15 @@
 """Factory functions for the Gemini chat model and embeddings (one place to swap providers)."""
 
+import warnings
 from functools import lru_cache
 
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 
 from app.config import get_settings
+
+# Newer Gemini models ignore temperature; the library warns on every call.
+warnings.filterwarnings("ignore", message=".*uses fixed sampling defaults.*")
 
 
 @lru_cache

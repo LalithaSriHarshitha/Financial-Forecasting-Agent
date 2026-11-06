@@ -44,9 +44,9 @@ def main() -> int:
     try:
         from app.db.session import get_engine, init_db
 
+        init_db()  # creates the database and tables if missing
         with get_engine().connect() as conn:
             version = conn.execute(text("SELECT VERSION()")).scalar()
-        init_db()
         print(f"OK (MySQL {version}, tables ready)")
     except Exception as exc:
         ok = False

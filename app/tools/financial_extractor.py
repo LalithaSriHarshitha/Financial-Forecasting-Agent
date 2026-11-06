@@ -196,13 +196,21 @@ def _merge(extractions: list[dict]) -> tuple[dict[str, dict], list[dict]]:
     return merged, restatements
 
 
+_tables_ready = False
+
+
 def _save_to_db(rows: list[dict]) -> None:
+    global _tables_ready
     try:
         from app.db.repository import upsert_financial_metrics
+        from app.db.session import init_db
 
+        if not _tables_ready:  # also works from CLI scripts that never start the API
+            init_db()
+            _tables_ready = True
         upsert_financial_metrics(rows)
-    except Exception:  # the tool still works without the database
-        logger.warning("Could not store financial metrics in the database", exc_info=True)
+    except Exception as exc:  # the tool still works without the database
+        logger.warning("Could not store financial metrics in the database: %s", str(exc).splitlines()[0][:200])
 
 
 def get_financial_metrics(quarters: list[str] | None = None) -> dict:

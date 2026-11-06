@@ -13,6 +13,7 @@ import time
 
 from fastapi.testclient import TestClient
 
+from app import __version__
 from app.config import PROJECT_ROOT, get_settings
 from app.logging_config import setup_logging
 
@@ -53,7 +54,7 @@ def main() -> int:
     row = get_request_log(body["request_id"])
     result = body["result"]
 
-    print("\n================ V1 END-TO-END RUN ================")
+    print(f"\n================ END-TO-END RUN (v{__version__}) ================")
     print(f"HTTP status          : {resp.status_code} in {elapsed:.0f}s")
     print(f"Request id           : {body['request_id']}")
     print(f"Logged to MySQL      : {'yes, status=' + row.status if row else 'NO'}")

@@ -41,6 +41,7 @@ def run_forecast(task: str) -> tuple[ForecastResult, list[str]]:
         f"{call['name']}({call.get('args', {})})"
         for msg in state["messages"]
         for call in (getattr(msg, "tool_calls", None) or [])
+        if call["name"] != ForecastResult.__name__  # the final structured answer, not a tool
     ]
     logger.info("Agent tool calls: %s", trace)
     result = state.get("structured_response")

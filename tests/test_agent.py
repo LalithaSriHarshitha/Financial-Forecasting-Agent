@@ -46,6 +46,7 @@ def test_agent_chains_tools_into_structured_forecast(monkeypatch, caplog, sample
     assert result.forecast_period == "Q3 FY27"
     assert trace[0].startswith("financial_data_extractor")
     assert trace[1].startswith("qualitative_analysis")
+    assert len(trace) == 2  # the structured ForecastResult call is not listed as a tool
     progress = caplog.text
     assert "LLM call #1 started" in progress and "LLM call #3 started" in progress
     assert "Tool financial_data_extractor started" in progress

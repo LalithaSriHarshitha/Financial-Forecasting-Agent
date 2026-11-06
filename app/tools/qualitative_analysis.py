@@ -7,11 +7,10 @@ forward-looking statements as a structured `QualitativeInsights` object.
 
 import json
 import logging
-from functools import lru_cache
 
 from langchain_core.tools import tool
 
-from app.ingestion.index import get_vector_store
+from app.ingestion.index import get_shared_vector_store
 from app.llm import get_chat_model
 from app.schemas.financials import QualitativeInsights
 from app.tools.quarters import normalize_quarter
@@ -35,14 +34,9 @@ EXCERPTS:
 {context}"""
 
 
-@lru_cache
-def _store():
-    return get_vector_store()
-
-
 def retrieve(query: str, quarter: str | None = None, k: int = TOP_K):
     flt = {"quarter": normalize_quarter(quarter)} if quarter else None
-    return _store().similarity_search(query, k=k, filter=flt)
+    return get_shared_vector_store().similarity_search(query, k=k, filter=flt)
 
 
 def analyze(query: str, quarter: str | None = None) -> dict:
@@ -85,4 +79,8 @@ def qualitative_analysis(query: str, quarter: str | None = None) -> str:
         query: What to look for in the transcripts.
         quarter: Optional quarter label like "Q2 FY27" to restrict the search to one call.
     """
-    return json.dumps(analyze(query, quarter), indent=2, default=str)
+    try:
+        return json.dumps(analyze(query, quarter), indent=2, default=str)
+    except Exception as exc:  # report to the agent instead of aborting the forecast
+        logger.exception("qualitative_analysis failed for %r", query)
+        return json.dumps({"query": query, "error": f"{type(exc).__name__}: {exc}"})

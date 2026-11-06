@@ -3,6 +3,7 @@
 import logging
 import re
 import shutil
+import threading
 import time
 
 from langchain_chroma import Chroma
@@ -60,6 +61,31 @@ def get_vector_store() -> Chroma:
         embedding_function=get_embeddings(),
         persist_directory=str(get_settings().chroma_path),
     )
+
+
+_shared_store: Chroma | None = None
+_store_lock = threading.Lock()
+
+
+def get_shared_vector_store() -> Chroma:
+    """Process-wide Chroma client for queries.
+
+    The agent runs tool calls in parallel threads, and creating several Chroma
+    clients at the same moment is not thread-safe, so the client is created once
+    under a lock and reused.
+    """
+    global _shared_store
+    if _shared_store is None:
+        with _store_lock:
+            if _shared_store is None:
+                _shared_store = get_vector_store()
+    return _shared_store
+
+
+def reset_shared_vector_store() -> None:
+    global _shared_store
+    with _store_lock:
+        _shared_store = None
 
 
 def build_index(rebuild: bool = True) -> int:

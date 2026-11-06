@@ -184,4 +184,8 @@ def financial_data_extractor(quarters: list[str] | None = None) -> str:
         quarters: Optional list of quarter labels like ["Q1 FY27", "Q2 FY27"].
             Leave empty to get every quarter available in the reports.
     """
-    return json.dumps(get_financial_metrics(quarters), indent=2)
+    try:
+        return json.dumps(get_financial_metrics(quarters), indent=2)
+    except Exception as exc:  # report to the agent instead of aborting the forecast
+        logger.exception("financial_data_extractor failed")
+        return json.dumps({"error": f"{type(exc).__name__}: {exc}"})

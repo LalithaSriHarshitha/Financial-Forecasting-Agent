@@ -1,6 +1,6 @@
 # Evaluation report
 
-Generated 2026-11-06T10:01:04+00:00 with `gemini` / `gemini-3.6-flash`.
+Generated 2026-11-06T10:32:19+00:00 with `gemini` / `gemini-3.6-flash`.
 
 ## 1. Extraction accuracy
 
@@ -39,4 +39,10 @@ Hit@3 on 12 hand-written questions (paraphrased, no key terms):
 
 ## 4. Consistency
 
-Not run. Use `python -m eval.run --consistency 3` (about 5 LLM requests per run).
+2 of 3 runs completed.
+
+| Field | Most common | Agreement | Values |
+|---|---|---|---|
+| revenue_direction | growth | 50.0% | growth, flat |
+| margin_direction | contraction | 100.0% | contraction, contraction |
+| confidence | high | 50.0% | high, medium |

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-06T10:01:04+00:00",
+  "generated_at": "2026-11-06T10:32:19+00:00",
   "provider": "gemini",
   "model": "gemini-3.6-flash",
   "extraction": {
@@ -228,5 +228,35 @@
       }
     ]
   },
-  "consistency": null
+  "consistency": {
+    "runs": 3,
+    "completed": 2,
+    "errors": [
+      "run 3: GoogleRateLimitError: Error calling model 'gemini-3.6-flash' (RESOURCE_EXHAUSTED): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quo"
+    ],
+    "revenue_direction": {
+      "mode": "growth",
+      "agreement_pct": 50.0,
+      "values": [
+        "growth",
+        "flat"
+      ]
+    },
+    "margin_direction": {
+      "mode": "contraction",
+      "agreement_pct": 100.0,
+      "values": [
+        "contraction",
+        "contraction"
+      ]
+    },
+    "confidence": {
+      "mode": "high",
+      "agreement_pct": 50.0,
+      "values": [
+        "high",
+        "medium"
+      ]
+    }
+  }
 }

@@ -17,6 +17,9 @@ final JSON are logged to **MySQL 8.0**.
 **Deploy:** a free public deployment on Render (Docker + hosted MySQL) is described in
 [DEPLOY.md](DEPLOY.md). The public API is protected by `X-API-Key` and a per-client rate limit.
 
+**Setting it up yourself:** follow the step-by-step [SETUP.md](SETUP.md). You use your own
+Gemini key and MySQL; the documents and transcript index are included.
+
 **Quick start** (after the setup in section 3):
 `python -m app.check` → `python -m app.ingestion` → `python -m app.demo`, or `uvicorn app.main:app`.
 
